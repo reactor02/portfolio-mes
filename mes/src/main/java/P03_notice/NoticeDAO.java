@@ -6,18 +6,21 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+@Repository
 public class NoticeDAO {
+
+    @Autowired
+    private DataSource dataSource;
 
     private Connection getConn() {
         Connection conn = null;
         try {
-            Context ctx = new InitialContext();
-            DataSource dataFactory = (DataSource) ctx.lookup("java:/comp/env/jdbc/oracle");
-            conn = dataFactory.getConnection();
+            conn = dataSource.getConnection();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -180,7 +183,7 @@ public class NoticeDAO {
             ps.setString(3, noticeDTO.getContent());
             ps.setString(4, noticeDTO.getEmpId());
             ps.setString(5, noticeDTO.getOriginName());  // 파일 없으면 null
-            ps.setString(6, noticeDTO.getSaveName());   // 파일 없으면 null
+            ps.setString(6, noticeDTO.getSaveName());    // 파일 없으면 null
 
             result = ps.executeUpdate();
             conn.commit();

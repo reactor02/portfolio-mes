@@ -1,175 +1,68 @@
 package P11_masterdata.controller;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Enumeration;
-import java.util.Map;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import P01_auth.LoginDTO;
 import P11_masterdata.DAO.VendorDAO;
 import P11_masterdata.DTO.VendorDTO;
 
-@WebServlet("/vendorUpdate")
-public class VendorUpdateController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Controller
+@RequestMapping("/vendorUpdate")
+public class VendorUpdateController {
 
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.sendRedirect(request.getContextPath() + "/vendor");
+	@GetMapping
+	public String doGet() {
+		return "redirect:/vendor";
 	}
 
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	@PostMapping
+	public String doPost(
+			@RequestParam(required = false) String vendor_id,
+			@RequestParam(required = false) String vendor_type,
+			@RequestParam(required = false) String vendor_name,
+			@RequestParam(required = false) String phone_no,
+			@RequestParam(required = false) String addr,
+			@RequestParam(required = false, defaultValue = "") String emp_id,
+			HttpSession session) {
 
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8;");
-
-		VendorDTO vendorDTO = new VendorDTO();
-		vendorDTO.setVendor_id(trimToEmpty(request.getParameter("vendor_id")));
-		vendorDTO.setVendor_type(trimToEmpty(request.getParameter("vendor_type")));
-		vendorDTO.setVendor_name(trimToEmpty(request.getParameter("vendor_name")));
-		vendorDTO.setPhone_no(trimToEmpty(request.getParameter("phone_no")));
-		vendorDTO.setAddr(trimToEmpty(request.getParameter("addr")));
-
-		String emp_id = trimToEmpty(request.getParameter("emp_id"));
-
-		if (emp_id.equals("")) {
-			emp_id = findSessionEmpId(request);
+		emp_id = emp_id.trim();
+		if (emp_id.isEmpty()) {
+			emp_id = findSessionEmpId(session);
 		}
-
-		// emp_id 없으면 null 허용
-		if (emp_id.equals("")) {
+		if (emp_id.isEmpty()) {
 			emp_id = null;
 		}
 
+		VendorDTO vendorDTO = new VendorDTO();
+		vendorDTO.setVendor_id(vendor_id);
+		vendorDTO.setVendor_type(vendor_type);
+		vendorDTO.setVendor_name(vendor_name);
+		vendorDTO.setPhone_no(phone_no);
+		vendorDTO.setAddr(addr);
 		vendorDTO.setEmp_id(emp_id);
 
 		VendorDAO vendorDAO = new VendorDAO();
 		vendorDAO.updateVendor(vendorDTO);
 
-		response.sendRedirect(request.getContextPath() + "/vendor");
+		return "redirect:/vendor";
 	}
 
-	private String trimToEmpty(String value) {
-		if (value == null) {
-			return "";
-		}
-		return value.trim();
-	}
-
-	private String findSessionEmpId(HttpServletRequest request) {
-		HttpSession session = request.getSession(false);
-
-		if (session == null) {
-			return "";
-		}
-
-		String[] directAttrNames = { "emp_id", "empId", "loginEmpId" };
-
-		for (String attrName : directAttrNames) {
-			Object attrValue = session.getAttribute(attrName);
-			String empId = trimToEmpty(attrValue == null ? null : String.valueOf(attrValue));
-
-			if (!empId.equals("")) {
-				return empId;
+	private String findSessionEmpId(HttpSession session) {
+		if (session == null) return "";
+		try {
+			LoginDTO dto = (LoginDTO) session.getAttribute("dto");
+			if (dto != null && dto.getEmpid() != null && !dto.getEmpid().trim().isEmpty()) {
+				return dto.getEmpid().trim();
 			}
-		}
-
-		String[] objectAttrNames = { "dto", "loginDTO", "loginInfo", "user" };
-
-		for (String attrName : objectAttrNames) {
-			String empId = extractEmpId(session.getAttribute(attrName));
-
-			if (!empId.equals("")) {
-				return empId;
-			}
-		}
-
-		Enumeration<String> attrNames = session.getAttributeNames();
-
-		while (attrNames.hasMoreElements()) {
-			String attrName = attrNames.nextElement();
-			Object attrValue = session.getAttribute(attrName);
-
-			String directEmpId = "";
-			String lowerAttrName = attrName == null ? "" : attrName.toLowerCase();
-
-			if (lowerAttrName.contains("emp")) {
-				directEmpId = trimToEmpty(attrValue == null ? null : String.valueOf(attrValue));
-			}
-
-			if (!directEmpId.equals("")) {
-				return directEmpId;
-			}
-
-			String objectEmpId = extractEmpId(attrValue);
-			if (!objectEmpId.equals("")) {
-				return objectEmpId;
-			}
-		}
-
-		return "";
-	}
-
-	private String extractEmpId(Object sourceObject) {
-		if (sourceObject == null) {
-			return "";
-		}
-
-		if (sourceObject instanceof Map<?, ?>) {
-			Map<?, ?> sourceMap = (Map<?, ?>) sourceObject;
-			String[] mapKeys = { "empid", "empId", "emp_id" };
-
-			for (String mapKey : mapKeys) {
-				Object value = sourceMap.get(mapKey);
-				String empId = trimToEmpty(value == null ? null : String.valueOf(value));
-
-				if (!empId.equals("")) {
-					return empId;
-				}
-			}
-		}
-
-		String[] getterNames = { "getEmpid", "getEmpId", "getEmp_id" };
-
-		for (String getterName : getterNames) {
-			try {
-				Method getter = sourceObject.getClass().getMethod(getterName);
-				Object value = getter.invoke(sourceObject);
-				String empId = trimToEmpty(value == null ? null : String.valueOf(value));
-
-				if (!empId.equals("")) {
-					return empId;
-				}
-			} catch (Exception e) {
-			}
-		}
-
-		String[] fieldNames = { "empid", "empId", "emp_id" };
-
-		for (String fieldName : fieldNames) {
-			try {
-				Field field = sourceObject.getClass().getDeclaredField(fieldName);
-				field.setAccessible(true);
-				Object value = field.get(sourceObject);
-				String empId = trimToEmpty(value == null ? null : String.valueOf(value));
-
-				if (!empId.equals("")) {
-					return empId;
-				}
-			} catch (Exception e) {
-			}
-		}
-
+		} catch (Exception e) { }
+		Object empId = session.getAttribute("emp_id");
+		if (empId != null) return String.valueOf(empId).trim();
 		return "";
 	}
 }

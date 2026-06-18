@@ -4,9 +4,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
 public class SuggestionService {
 
-    SuggestionDAO suggestionDAO = new SuggestionDAO();
+    @Autowired
+    SuggestionDAO suggestionDAO;
 
     // 목록 조회 (페이지네이션 + 검색)
     public Map<String, Object> getList(SuggestionDTO dto) {

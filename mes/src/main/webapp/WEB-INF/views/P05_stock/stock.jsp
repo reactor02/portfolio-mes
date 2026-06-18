@@ -139,10 +139,10 @@
 
                     <div class="pagination">
                         <c:if test="<%=pageNum == 1%>">
-                            <a>이전</a>
+                            <a>&lt;</a>
                         </c:if>
                         <c:if test="<%=pageNum != 1%>">
-                            <a href="/mes/stock?page=<%=pageNum-1%>&size=<%=size%><%=filterParams%>">이전</a>
+                            <a href="/mes/stock?page=<%=pageNum-1%>&size=<%=size%><%=filterParams%>">&lt;</a>
                         </c:if>
 
                         <c:forEach var="i" begin="<%=start_section%>" end="<%=end_section%>">
@@ -155,10 +155,10 @@
                         </c:forEach>
 
                         <c:if test="<%=pageNum == totalPage%>">
-                            <a>다음</a>
+                            <a>&gt;</a>
                         </c:if>
                         <c:if test="<%=pageNum != totalPage%>">
-                            <a href="/mes/stock?page=<%=pageNum+1%>&size=<%=size%><%=filterParams%>">다음</a>
+                            <a href="/mes/stock?page=<%=pageNum+1%>&size=<%=size%><%=filterParams%>">&gt;</a>
                         </c:if>
                     </div>
                 </div>

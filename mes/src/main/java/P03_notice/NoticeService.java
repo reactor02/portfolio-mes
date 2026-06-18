@@ -4,11 +4,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
 public class NoticeService {
 
-    NoticeDAO noticeDAO = new NoticeDAO();
+    @Autowired
+    NoticeDAO noticeDAO;
 
-    // ¶°¶° ∏Ò∑œ ¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°
+    // Î™©Î°ù Ï°∞Ìöå
     public Map getListNotice(NoticeDTO noticeDTO) {
 
         int size = noticeDTO.getSize();
@@ -21,7 +26,7 @@ public class NoticeService {
         noticeDTO.setEnd(end);
 
         List list      = noticeDAO.selectAllNotice(noticeDTO);
-        int totalCount = noticeDAO.selectNoticeTotal(noticeDTO.getKeyword());  // ®Á ∞ÀªˆæÓ ¿¸¥ﬁ
+        int totalCount = noticeDAO.selectNoticeTotal(noticeDTO.getKeyword());
 
         Map map = new HashMap();
         map.put("list",       list);
@@ -30,27 +35,27 @@ public class NoticeService {
         return map;
     }
 
-    // ¶°¶° ¥‹∞« ¡∂»∏ ¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°
+    // Îã®Í±¥ Ï°∞Ìöå
     public NoticeDTO selectOneNotice(String boardno) {
         return noticeDAO.selectOneNotice(boardno);
     }
 
-    // ¶°¶° ¡∂»∏ºˆ ¡ı∞° ¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°
+    // Ï°∞ÌöåÏàò Ï¶ùÍ∞Ä
     public void updateViews(String boardno) {
         noticeDAO.updateViews(boardno);
     }
 
-    // ¶°¶° µÓ∑œ ¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°
+    // Îì±Î°ù
     public int insertNotice(NoticeDTO noticeDTO) {
         return noticeDAO.insertNotice(noticeDTO);
     }
 
-    // ¶°¶° ºˆ¡§ ¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°
+    // ÏàòÏ†ï
     public int updateNotice(NoticeDTO noticeDTO) {
         return noticeDAO.updateNotice(noticeDTO);
     }
 
-    // ¶°¶° ªË¡¶ ¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°¶°
+    // ÏÇ≠Ï†ú
     public int deleteNotice(String boardno) {
         return noticeDAO.deleteNotice(boardno);
     }

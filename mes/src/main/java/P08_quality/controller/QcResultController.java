@@ -1,214 +1,124 @@
 package P08_quality.controller;
 
-import java.io.IOException;
 import java.sql.Date;
 import java.util.List;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import P08_quality.QcDTO;
 import P08_quality.QcDefDTO;
 import P08_quality.QcDisposeDTO;
 import P08_quality.QcService;
 
-@WebServlet("/qcresultmodify")
-public class QcResultController extends HttpServlet {
-	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+@Controller
+@RequestMapping("/qcresultmodify")
+public class QcResultController {
+
+	@Autowired
+	private QcService service;
+
+	@GetMapping
+	public String doGet(@RequestParam String qcId, Model model) {
 		System.out.println("/qcresultmodify doGet 실행");
 
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		setContent(request, response);
-		defList(request, response);
-		disposeSum(request, response);
-		
-		request.getRequestDispatcher("/WEB-INF/views/P08_quality/resultModify.jsp").forward(request, response);
-		
-	}
-
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcresultmodify doPost 실행");
-		
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		String cmd = request.getParameter("cmd");
-		System.out.println(cmd);
-		
-		if("defectAdd".equals(cmd)) {
-			defectAdd(request, response);
-
-		    response.setContentType("application/json");
-		    response.setCharacterEncoding("UTF-8");
-
-		    response.getWriter().write("{\"success\":true}");
-		} else if("defectUpdate".equals(cmd)) {
-			defectUpdate(request, response);
-		} else if("defectDelete".equals(cmd)) {
-			defectDelete(request, response);
-		} else if("modify".equals(cmd)) {
-			modifyResult(request, response);
-		}
-		
-	}
-	
-	protected void setContent(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcresultmodify setContent 실행");
-		
-		String qcId = request.getParameter("qcId");
 		QcDTO dto = new QcDTO();
 		dto.setQcId(qcId);
-		
-		QcService service = new QcService();
-		QcDTO QcDTO = service.detail(dto);
-		
-		System.out.println(QcDTO);
-		
-		// forward
-		request.setAttribute("qcInfo", QcDTO);
+		dto = service.detail(dto);
+		model.addAttribute("qcInfo", dto);
 
-	}
-	
-	protected void defectAdd(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcresultmodify defectAdd 실행");
-		
-		String qcId = request.getParameter("qcId");
-		int defQty = Integer.parseInt(request.getParameter("defQty"));
-		int defType = Integer.parseInt(request.getParameter("defType"));
-		String solution = request.getParameter("solution");
-		String disposeStr = request.getParameter("dispose");
-		String dispose = null;
-		if ("Y".equals(disposeStr)) {
-			dispose = "Y";
-		}
-		
-		QcDefDTO dto = new QcDefDTO();
-		dto.setDefCnt(defQty);
-		dto.setdType(defType);
-		dto.setSolution(solution);
-		dto.setDispose(dispose);
-		
-		QcService service = new QcService();
-		int result = service.addDef(qcId, dto);
-		
-	}
-	
-	protected void defList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcresultmodify defList 실행");
-		
-		String qcId = request.getParameter("qcId");
-		
-		QcService service = new QcService();
 		List defList = service.defContent(qcId);
-		
-		System.out.println(defList);
-		
-		// forward
-		request.setAttribute("defList", defList);
+		model.addAttribute("defList", defList);
 
-	}
-	
-	protected void disposeSum(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcresultmodify disposeSum 실행");
-		
-		String qcId = request.getParameter("qcId");
-		
 		QcDisposeDTO disDTO = new QcDisposeDTO();
 		disDTO.setQcId(qcId);
-		
-		QcService service = new QcService();
 		disDTO = service.disposeSum(disDTO);
-		
-		System.out.println(disDTO);
-		
-		// forward
-		request.setAttribute("dispose", disDTO);
+		model.addAttribute("dispose", disDTO);
 
+		return "P08_quality/resultModify";
 	}
-	
-	protected void defectUpdate (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcresultmodify defectUpdate 실행");
-		
-		String defId = request.getParameter("defectId");
-		int defQty = Integer.parseInt(request.getParameter("defQty"));
-		int defType = Integer.parseInt(request.getParameter("defType"));
-		String solution = request.getParameter("solution");
-		
-		String disposeStr = request.getParameter("dispose");
-		String dispose = null;
-		if ("Y".equals(disposeStr)) {
-			dispose = "Y";
-		}
-		
+
+	/* defectAdd → JSON 응답 */
+	@PostMapping(params = "cmd=defectAdd")
+	@ResponseBody
+	public String defectAdd(
+			@RequestParam String qcId,
+			@RequestParam int defQty,
+			@RequestParam int defType,
+			@RequestParam(required = false) String solution,
+			@RequestParam(required = false) String dispose) {
+
+		String disposeVal = "Y".equals(dispose) ? "Y" : null;
+
 		QcDefDTO dto = new QcDefDTO();
-		dto.setDefId(defId);
 		dto.setDefCnt(defQty);
 		dto.setdType(defType);
 		dto.setSolution(solution);
-		dto.setDispose(dispose);
-		
-		QcService service = new QcService();
+		dto.setDispose(disposeVal);
+
+		service.addDef(qcId, dto);
+		return "{\"success\":true}";
+	}
+
+	/* defectUpdate → JSON 응답 */
+	@PostMapping(params = "cmd=defectUpdate")
+	@ResponseBody
+	public String defectUpdate(
+			@RequestParam String defectId,
+			@RequestParam int defQty,
+			@RequestParam int defType,
+			@RequestParam(required = false) String solution,
+			@RequestParam(required = false) String dispose) {
+
+		String disposeVal = "Y".equals(dispose) ? "Y" : null;
+
+		QcDefDTO dto = new QcDefDTO();
+		dto.setDefId(defectId);
+		dto.setDefCnt(defQty);
+		dto.setdType(defType);
+		dto.setSolution(solution);
+		dto.setDispose(disposeVal);
+
 		int result = service.updateDef(dto);
-		
-
-		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
-
-		response.getWriter().write("{\"success\":" + (result > 0) + "}");
-	}
-	
-	protected void defectDelete (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcresultmodify defectDelete 실행");
-		
-		String defId = request.getParameter("defectId");
-		
-		QcService service = new QcService();
-		int result = service.deleteDef(defId);
-		
-
-		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
-
-		response.getWriter().write("{\"success\":" + (result > 0) + "}");
-	}
-	
-	protected void modifyResult(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcresultmodify modifyResult 실행");
-
-	    String qcId = request.getParameter("qcId");
-	    String eDateStr = request.getParameter("eDate");
-	    int qcStatus = Integer.parseInt(request.getParameter("status"));
-
-	    Date eDate = null;
-
-	    // 검사 완료(30)일 때만 완료일 필수
-	    if (qcStatus == 30) {
-	        if (eDateStr == null || eDateStr.trim().isEmpty()) {
-	            throw new RuntimeException("검사 완료 상태에서는 검사 완료일을 입력해야 합니다.");
-	        }
-	        eDate = Date.valueOf(eDateStr);
-	    } else {
-	        // 검사 전/검사 중/보류는 완료일 없어도 됨
-	        if (eDateStr != null && !eDateStr.trim().isEmpty()) {
-	            eDate = Date.valueOf(eDateStr);
-	        }
-	    }
-
-	    QcDTO dto = new QcDTO();
-	    dto.setQcId(qcId);
-	    dto.seteDate(eDate);
-	    dto.setQcStatus(qcStatus);
-
-	    QcService service = new QcService();
-	    int result = service.modifyResult(dto);
-
-	    response.sendRedirect("/mes/qcdetail?qcId=" + qcId);
+		return "{\"success\":" + (result > 0) + "}";
 	}
 
+	/* defectDelete → JSON 응답 */
+	@PostMapping(params = "cmd=defectDelete")
+	@ResponseBody
+	public String defectDelete(@RequestParam String defectId) {
+		int result = service.deleteDef(defectId);
+		return "{\"success\":" + (result > 0) + "}";
+	}
+
+	/* modify → redirect */
+	@PostMapping(params = "cmd=modify")
+	public String modifyResult(
+			@RequestParam String qcId,
+			@RequestParam(required = false) String eDate,
+			@RequestParam int status) {
+
+		Date eDateVal = null;
+		if (status == 30) {
+			if (eDate == null || eDate.trim().isEmpty())
+				throw new RuntimeException("검사 완료 상태에서는 검사 완료일을 입력해야 합니다.");
+			eDateVal = Date.valueOf(eDate);
+		} else {
+			if (eDate != null && !eDate.trim().isEmpty()) eDateVal = Date.valueOf(eDate);
+		}
+
+		QcDTO dto = new QcDTO();
+		dto.setQcId(qcId);
+		dto.seteDate(eDateVal);
+		dto.setQcStatus(status);
+		service.modifyResult(dto);
+
+		return "redirect:/qcdetail?qcId=" + qcId;
+	}
 }

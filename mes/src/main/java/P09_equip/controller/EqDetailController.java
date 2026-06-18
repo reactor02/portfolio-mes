@@ -1,148 +1,74 @@
 package P09_equip.controller;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import P07_work.WoDTO;
-import P07_work.WoService;
 import P09_equip.EqService;
 import P09_equip.DTO.EqDTO;
 import P09_equip.DTO.EqLogDTO;
 
-@WebServlet("/eqdetail")
-public class EqDetailController extends HttpServlet {
-    
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/equipdetail doGet 실행");
+@Controller
+@RequestMapping("/eqdetail")
+public class EqDetailController {
 
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		String cmd = request.getParameter("cmd");
-		
-		if("eqStop".equals(cmd)) {
-			eqStop(request, response);
-			return;
-		} else if("eqRun".equals(cmd)) {
-			eqRun(request, response);
-			return;
+	@Autowired
+	private EqService service;
+
+	@GetMapping
+	public String doGet(
+			@RequestParam String eqId,
+			@RequestParam(required = false) String cmd,
+			@RequestParam(defaultValue = "1") String page,
+			Model model) {
+
+		System.out.println("/eqdetail doGet 실행");
+
+		if ("eqStop".equals(cmd)) {
+			service.eqStop(eqId);
+			service.stopLog(eqId);
+			return "redirect:/eqdetail?eqId=" + eqId;
 		}
-		
-		setting(request, response);
-		request.getRequestDispatcher("/WEB-INF/views/P09_equip/detail.jsp").forward(request, response);
-	}
-
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/eqdetail doPost 실행");
-
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		String cmd = request.getParameter("cmd");
-		
-		if("statusChange".equals(cmd)) {
-			statusChange(request, response);
-			return;
+		if ("eqRun".equals(cmd)) {
+			service.eqRun(eqId);
+			service.startLog(eqId);
+			return "redirect:/eqdetail?eqId=" + eqId;
 		}
-		
-	}
-	
-	protected void setting(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/eqdetail setting 실행");
-		
-		String eqId = request.getParameter("eqId");
+
+		// 기본: 상세 조회
 		EqDTO dto = new EqDTO();
 		dto.setEqId(eqId);
-		
-		EqService service = new EqService();
 		dto = service.detail(dto);
-		
-		System.out.println(dto);
-		
-		// forward
-		request.setAttribute("eqInfo", dto);
-		
-		int size = 10;
-		int page = 1;
-		
-		String pageStr = request.getParameter("page");
-		
-		try {
-			page = Integer.parseInt(pageStr);			
-		} catch (Exception e) {
+		model.addAttribute("eqInfo", dto);
 
-		}
-		
+		int pageNum = 1;
+		try { pageNum = Integer.parseInt(page); } catch (Exception e) {}
+
 		EqLogDTO logDTO = new EqLogDTO();
-		logDTO.setSize(size);
-		logDTO.setPage(page);
+		logDTO.setSize(10);
+		logDTO.setPage(pageNum);
 		logDTO.setEqId(eqId);
-		
+
 		Map eqMap = service.getLog(logDTO);
-		
-		// forward
-		request.setAttribute("eqMap", eqMap);
-		request.setAttribute("log", eqMap.get("list"));
-		
-		System.out.println(eqMap);
-		System.out.println(eqMap.get("list"));
-	}
-	
+		model.addAttribute("eqMap", eqMap);
+		model.addAttribute("log", eqMap.get("list"));
 
-	protected void eqStop(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/eqdetail eqStop 실행");
-		
-		String eqId = request.getParameter("eqId");
-		
-		EqService service = new EqService();
-		int eqStop = service.eqStop(eqId);
-		int stopLog = service.stopLog(eqId);
-		
-		System.out.println(eqStop);
-		System.out.println(stopLog);
-		
-		String cp = request.getContextPath();
-		response.sendRedirect(cp + "/eqdetail?eqId=" + eqId);
-
-	}
-	
-	protected void eqRun(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/eqdetail eqRun 실행");
-		
-		String eqId = request.getParameter("eqId");
-		
-		EqService service = new EqService();
-		int eqRun = service.eqRun(eqId);
-		int startLog = service.startLog(eqId);
-		
-		System.out.println(eqRun);
-		System.out.println(startLog);
-
-		String cp = request.getContextPath();
-		response.sendRedirect(cp + "/eqdetail?eqId=" + eqId);
+		return "P09_equip/detail";
 	}
 
-	protected void statusChange(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	@PostMapping(params = "cmd=statusChange")
+	public String statusChange(
+			@RequestParam String eqId,
+			@RequestParam String status) {
+
 		System.out.println("/eqdetail statusChange 실행");
-		
-		String eqId = request.getParameter("eqId");
-		String status = request.getParameter("status");
-		
-		EqService service = new EqService();
-		int statusChange = service.statusChange(status, eqId);
-		
-		System.out.println(statusChange);
-		
-		String cp = request.getContextPath();
-		response.sendRedirect(cp + "/eqdetail?eqId=" + eqId);
-
+		service.statusChange(status, eqId);
+		return "redirect:/eqdetail?eqId=" + eqId;
 	}
-
 }

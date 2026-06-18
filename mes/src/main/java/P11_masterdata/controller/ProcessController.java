@@ -1,80 +1,44 @@
 package P11_masterdata.controller;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import P11_masterdata.DAO.ProcessDAO;
 import P11_masterdata.DTO.ProcessDTO;
 
-@WebServlet("/process")
-public class ProcessController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Controller
+@RequestMapping("/process")
+public class ProcessController {
 
-	public ProcessController() {
-		super();
-	}
+	@GetMapping
+	public String doGet(
+			@RequestParam(defaultValue = "5") int size,
+			@RequestParam(defaultValue = "1") int page,
+			@RequestParam(required = false, defaultValue = "") String keyword,
+			@RequestParam(required = false) String processId,
+			Model model) {
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8");
+		if (size < 1) size = 5;
+		if (page < 1) page = 1;
 
 		ProcessDAO processDAO = new ProcessDAO();
-
-		int size = 5;
-		int page = 1;
-
-		String sSize = request.getParameter("size");
-		String sPage = request.getParameter("page");
-		String keyword = request.getParameter("keyword");
-		String selectedProcessId = request.getParameter("processId");
-
-		if (keyword == null) {
-			keyword = "";
-		}
 		keyword = keyword.trim();
-
-		try {
-			if (sSize != null && !sSize.trim().equals("")) {
-				size = Integer.parseInt(sSize);
-			}
-		} catch (Exception e) {
-			size = 5;
-		}
-
-		try {
-			if (sPage != null && !sPage.trim().equals("")) {
-				page = Integer.parseInt(sPage);
-			}
-		} catch (Exception e) {
-			page = 1;
-		}
-
-		if (size < 1) {
-			size = 5;
-		}
-		if (page < 1) {
-			page = 1;
-		}
 
 		List<ProcessDTO> allProcessList = processDAO.selectProcessList();
 		ProcessDTO selectedProcess = null;
 
-		if ((selectedProcessId == null || selectedProcessId.trim().equals("")) && !allProcessList.isEmpty()) {
-			selectedProcessId = allProcessList.get(0).getProcess_id();
+		if ((processId == null || processId.trim().isEmpty()) && !allProcessList.isEmpty()) {
+			processId = allProcessList.get(0).getProcess_id();
 		}
 
 		for (ProcessDTO dto : allProcessList) {
-			if (dto.getProcess_id() != null && dto.getProcess_id().equals(selectedProcessId)) {
+			if (dto.getProcess_id() != null && dto.getProcess_id().equals(processId)) {
 				selectedProcess = dto;
 				break;
 			}
@@ -85,15 +49,9 @@ public class ProcessController extends HttpServlet {
 
 		int totalCount = processDAO.selectProcessTotalCount(processDTO);
 		int totalPage = totalCount / size;
-		if (totalCount % size != 0) {
-			totalPage++;
-		}
-		if (totalPage == 0) {
-			totalPage = 1;
-		}
-		if (page > totalPage) {
-			page = totalPage;
-		}
+		if (totalCount % size != 0) totalPage++;
+		if (totalPage == 0) totalPage = 1;
+		if (page > totalPage) page = totalPage;
 
 		processDTO.setPage(page);
 		processDTO.setSize(size);
@@ -101,11 +59,11 @@ public class ProcessController extends HttpServlet {
 		processDTO.setEnd(page * size);
 
 		List<ProcessDTO> processList = processDAO.selectProcessPageList(processDTO);
-		List<ProcessDTO> stepList = new ArrayList<ProcessDTO>();
+		List<ProcessDTO> stepList = new ArrayList<>();
 		int nextStepSeq = 1;
 
-		if (selectedProcessId != null && !selectedProcessId.trim().equals("")) {
-			stepList = processDAO.selectProcessStepList(selectedProcessId);
+		if (processId != null && !processId.trim().isEmpty()) {
+			stepList = processDAO.selectProcessStepList(processId);
 			if (!stepList.isEmpty()) {
 				nextStepSeq = stepList.get(stepList.size() - 1).getSeq() + 1;
 			}
@@ -113,25 +71,19 @@ public class ProcessController extends HttpServlet {
 
 		String nextProcessId = processDAO.selectNextProcessId();
 
-		request.setAttribute("allProcessList", allProcessList);
-		request.setAttribute("processList", processList);
-		request.setAttribute("stepList", stepList);
-		request.setAttribute("nextStepSeq", nextStepSeq);
-		request.setAttribute("selectedProcessId", selectedProcessId);
-		request.setAttribute("selectedProcess", selectedProcess);
-		request.setAttribute("nextProcessId", nextProcessId);
-		request.setAttribute("page", page);
-		request.setAttribute("size", size);
-		request.setAttribute("totalPage", totalPage);
-		request.setAttribute("totalCount", totalCount);
-		request.setAttribute("keyword", keyword);
+		model.addAttribute("allProcessList", allProcessList);
+		model.addAttribute("processList", processList);
+		model.addAttribute("stepList", stepList);
+		model.addAttribute("nextStepSeq", nextStepSeq);
+		model.addAttribute("selectedProcessId", processId);
+		model.addAttribute("selectedProcess", selectedProcess);
+		model.addAttribute("nextProcessId", nextProcessId);
+		model.addAttribute("page", page);
+		model.addAttribute("size", size);
+		model.addAttribute("totalPage", totalPage);
+		model.addAttribute("totalCount", totalCount);
+		model.addAttribute("keyword", keyword);
 
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/process.jsp");
-		dispatcher.forward(request, response);
-	}
-
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-
+		return "P11_masterdata/process";
 	}
 }

@@ -1,61 +1,50 @@
 package P11_masterdata.controller;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import P11_masterdata.DAO.BomDAO;
 import P11_masterdata.DTO.BomDTO;
 
-@WebServlet("/BomDetailAddController")
-public class BomDetailAddController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Controller
+@RequestMapping("/BomDetailAddController")
+public class BomDetailAddController {
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.sendRedirect(request.getContextPath() + "/bom");
+	@GetMapping
+	public String doGet() {
+		return "redirect:/bom";
 	}
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	@PostMapping
+	public String doPost(
+			@RequestParam String bom_id,
+			@RequestParam String child_item_id,
+			@RequestParam(required = false, defaultValue = "0") String ea) {
 
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8");
-
-		String bomId = request.getParameter("bom_id");
-		String childItemId = request.getParameter("child_item_id");
-		String sEa = request.getParameter("ea");
-
-		BigDecimal ea = BigDecimal.ZERO;
-		try {
-			ea = new BigDecimal(sEa);
-		} catch (Exception e) {
-			ea = BigDecimal.ZERO;
-		}
+		BigDecimal eaVal = BigDecimal.ZERO;
+		try { eaVal = new BigDecimal(ea); } catch (Exception e) {}
 
 		BomDAO bomDAO = new BomDAO();
 
-		if (bomId == null || bomId.trim().equals("")
-				|| childItemId == null || childItemId.trim().equals("")
-				|| ea.compareTo(BigDecimal.ZERO) <= 0
-				|| !bomDAO.isValidChildItem(null, childItemId)) {
-			response.sendRedirect(request.getContextPath() + "/bomDetail?bomId=" + bomId);
-			return;
+		if (bom_id == null || bom_id.trim().isEmpty()
+				|| child_item_id == null || child_item_id.trim().isEmpty()
+				|| eaVal.compareTo(BigDecimal.ZERO) <= 0
+				|| !bomDAO.isValidChildItem(null, child_item_id)) {
+			return "redirect:/bomDetail?bomId=" + bom_id;
 		}
 
 		BomDTO bomDTO = new BomDTO();
-		bomDTO.setBom_id(bomId);
-		bomDTO.setChild_item_id(childItemId);
-		bomDTO.setEa(ea);
+		bomDTO.setBom_id(bom_id);
+		bomDTO.setChild_item_id(child_item_id);
+		bomDTO.setEa(eaVal);
 		bomDTO.setBom_detail_id(bomDAO.selectNextBomDetailId());
 
 		bomDAO.insertBomDetail(bomDTO);
-
-		response.sendRedirect(request.getContextPath() + "/bomDetail?bomId=" + bomId);
+		return "redirect:/bomDetail?bomId=" + bom_id;
 	}
 }

@@ -4,15 +4,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import P07_work.SearchDTO;
 import P07_work.WoDAO;
 import P07_work.WoDTO;
 import P09_equip.DTO.EqDTO;
+
 import P09_equip.DTO.EqLogDTO;
 import P09_equip.DTO.EqSearchDTO;
 
+@Service
 public class EqService {
-	EqDAO dao = new EqDAO();
+	@Autowired
+	EqDAO dao;
 	
 	public Map getList(EqDTO dto) {
 		Map map = new HashMap();

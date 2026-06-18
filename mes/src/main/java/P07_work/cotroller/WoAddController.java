@@ -1,158 +1,127 @@
 package P07_work.cotroller;
 
-import java.io.IOException;
-import java.sql.Date;
 import java.util.List;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import P01_auth.DTO.UserWoDTO;
 import P06_prod.DTO.PlanWoDTO;
 import P07_work.WoAddDTO;
 import P07_work.WoService;
 
-@WebServlet("/workadd")
-public class WoAddController extends HttpServlet {
-	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/workadd doGet 실행");
+@Controller
+@RequestMapping("/workadd")
+public class WoAddController {
 
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		String cmd = request.getParameter("cmd");
-		
-		if ("getPlan".equals(cmd)) {
-			getPlan(request, response);
-			return;
-		}
-		
-		if ("searchWorker".equals(cmd)) {
-		    searchWorker(request, response);
-		    return;
-		}
-		
-		planList(request,response);
-		
-		request.getRequestDispatcher("/WEB-INF/views/P07_work/add.jsp").forward(request, response);
-	}
+    @Autowired
+    private WoService woService;
 
+    @GetMapping
+    public String doGet(@RequestParam(value = "cmd", required = false) String cmd,
+                        @RequestParam(value = "planId", required = false) String planId,
+                        @RequestParam(value = "keyword", required = false, defaultValue = "") String keyword,
+                        Model model) {
+        System.out.println("/workadd doGet 실행");
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/workadd doPost 실행");
+        if ("getPlan".equals(cmd)) {
+            return null; // handled by separate @ResponseBody method
+        }
 
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		addOrder(request, response);
-		
-		response.sendRedirect("/mes/worklist");
-		
-	}
-	
-	protected void planList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/workadd planList 실행");
-		
-		WoService service = new WoService();
-		List planList = service.planList();
-		
-		// forward
-		request.setAttribute("planList", planList);
-		
-	}
-	
-	protected void getPlan(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/workadd getPlan 실행");
+        if ("searchWorker".equals(cmd)) {
+            return null; // handled by separate @ResponseBody method
+        }
 
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		String planId = request.getParameter("planId");
-		
-		PlanWoDTO planDTO = new PlanWoDTO();
-		planDTO.setPlanId(planId);
-		
-		WoService service = new WoService();
-		planDTO = service.getPlan(planDTO);
-		
-//		request.setAttribute("selectedPlan", planDTO);
-		response.setContentType("application/json; charset=UTF-8");
+        planList(model);
+        return "P07_work/add";
+    }
 
-		String json = "{"
-		    + "\"planId\":\"" + planDTO.getPlanId() + "\","
-		    + "\"itemId\":\"" + planDTO.getItemId() + "\","
-		    + "\"itemName\":\"" + planDTO.getItemName() + "\","
-		    + "\"prevQty\":\"" + planDTO.getPrevQty() + "\","
-		    + "\"planQty\":\"" + planDTO.getPlanQty() + "\","
-		    + "\"dName\":\"" + planDTO.getdName() + "\","
-		    + "\"dId\":\"" + planDTO.getdId() + "\","
-    		+ "\"sDate\":\"" + planDTO.getsDate() + "\","
-    		+ "\"eDate\":\"" + planDTO.geteDate() + "\""
-		    + "}";
+    @GetMapping(params = "cmd=getPlan")
+    @ResponseBody
+    public ResponseEntity<String> getPlan(@RequestParam("planId") String planId) {
+        System.out.println("/workadd getPlan 실행");
 
-		response.getWriter().write(json);
-	}
-	
-	protected void searchWorker(HttpServletRequest request, HttpServletResponse response) throws IOException {
-	    System.out.println("/workadd searchWorker 실행");
+        PlanWoDTO planDTO = new PlanWoDTO();
+        planDTO.setPlanId(planId);
 
-	    request.setCharacterEncoding("UTF-8");
-	    response.setContentType("application/json; charset=UTF-8");
+        planDTO = woService.getPlan(planDTO);
 
-	    String keyword = request.getParameter("keyword").trim();
+        String json = "{"
+            + "\"planId\":\"" + planDTO.getPlanId() + "\","
+            + "\"itemId\":\"" + planDTO.getItemId() + "\","
+            + "\"itemName\":\"" + planDTO.getItemName() + "\","
+            + "\"prevQty\":\"" + planDTO.getPrevQty() + "\","
+            + "\"planQty\":\"" + planDTO.getPlanQty() + "\","
+            + "\"dName\":\"" + planDTO.getdName() + "\","
+            + "\"dId\":\"" + planDTO.getdId() + "\","
+            + "\"sDate\":\"" + planDTO.getsDate() + "\","
+            + "\"eDate\":\"" + planDTO.geteDate() + "\""
+            + "}";
 
-	    WoService service = new WoService();
-	    List<UserWoDTO> list = service.searchWorker(keyword);
+        return ResponseEntity.ok()
+            .header("Content-Type", "application/json; charset=UTF-8")
+            .body(json);
+    }
 
-	    StringBuilder json = new StringBuilder("[");
-	    for (int i = 0; i < list.size(); i++) {
-	        UserWoDTO e = list.get(i);
+    @GetMapping(params = "cmd=searchWorker")
+    @ResponseBody
+    public ResponseEntity<String> searchWorker(
+            @RequestParam(value = "keyword", defaultValue = "") String keyword) {
+        System.out.println("/workadd searchWorker 실행");
 
-	        json.append("{")
-	            .append("\"empId\":\"").append(e.getEmpId()).append("\",")
-	            .append("\"empName\":\"").append(e.geteName()).append("\"")
-	            .append("}");
+        List<UserWoDTO> list = woService.searchWorker(keyword.trim());
 
-	        if (i < list.size() - 1) json.append(",");
-	    }
-	    json.append("]");
+        StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < list.size(); i++) {
+            UserWoDTO e = list.get(i);
+            json.append("{")
+                .append("\"empId\":\"").append(e.getEmpId()).append("\",")
+                .append("\"empName\":\"").append(e.geteName()).append("\"")
+                .append("}");
+            if (i < list.size() - 1) json.append(",");
+        }
+        json.append("]");
 
-	    response.getWriter().write(json.toString());
-	}
-	
-	protected void addOrder(HttpServletRequest request, HttpServletResponse response) throws IOException {
-	    System.out.println("/workadd addOrder 실행");
+        return ResponseEntity.ok()
+            .header("Content-Type", "application/json; charset=UTF-8")
+            .body(json.toString());
+    }
 
-	    request.setCharacterEncoding("UTF-8");
-	    response.setContentType("application/json; charset=UTF-8");
-	    
-	    String planId = request.getParameter("planId");
-	    int woQty = Integer.parseInt(request.getParameter("targetQty"));
-	    String workDate = request.getParameter("workDate");
-	    String worker = request.getParameter("workerId");
-	    String content = request.getParameter("content");
-	    
-	    WoAddDTO addDTO = new WoAddDTO();
-	    
-	    addDTO.setPlanId(planId);
-	    addDTO.setWoQty(woQty);
-	    addDTO.setWorkDate(workDate);
-	    addDTO.setWorker(worker);
-	    addDTO.setContent(content);
-	    
-	    WoService service = new WoService();
-	    int result = service.addOrder(addDTO);
+    @PostMapping
+    public String doPost(@RequestParam("planId") String planId,
+                         @RequestParam("targetQty") int woQty,
+                         @RequestParam("workDate") String workDate,
+                         @RequestParam("workerId") String worker,
+                         @RequestParam(value = "content", required = false) String content) {
+        System.out.println("/workadd doPost 실행");
 
-	    System.out.println(result);
-	    
-	}
-	
-	private String safe(String str) {
-	    return str == null ? "" : str.replace("\"", "\\\"");
-	}
-	
+        WoAddDTO addDTO = new WoAddDTO();
+        addDTO.setPlanId(planId);
+        addDTO.setWoQty(woQty);
+        addDTO.setWorkDate(workDate);
+        addDTO.setWorker(worker);
+        addDTO.setContent(content);
+
+        int result = woService.addOrder(addDTO);
+        System.out.println(result);
+
+        return "redirect:/worklist";
+    }
+
+    private void planList(Model model) {
+        System.out.println("/workadd planList 실행");
+        List planList = woService.planList();
+        model.addAttribute("planList", planList);
+    }
+
+    private String safe(String str) {
+        return str == null ? "" : str.replace("\"", "\\\"");
+    }
 }

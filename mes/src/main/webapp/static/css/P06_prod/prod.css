@@ -621,44 +621,38 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 4px;
-    margin-top: 20px;
-    padding-bottom: 12px;
+    gap: 6px;
+    padding: 20px 0 4px;
 }
 
 .pp .page-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 32px;
-    height: 32px;
-    padding: 0 10px;
-    border: 1px solid var(--pp-border);
-    border-radius: 6px;
-    background: var(--pp-surface);
-    color: var(--pp-text-primary);
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: #555;
     font-size: 13px;
     text-decoration: none;
     cursor: pointer;
-    transition: background var(--pp-transition), color var(--pp-transition), border-color var(--pp-transition);
+    transition: background 0.15s;
 }
 
 .pp .page-btn:hover:not(:disabled):not(.page-btn-active) {
-    background: #F1F5F9;
-    border-color: var(--pp-primary);
-    color: var(--pp-primary);
+    background: #e8eaf3;
 }
 
 .pp .page-btn-active {
-    background: var(--pp-primary);
-    border-color: var(--pp-primary);
+    background: #4a4a6a;
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
     cursor: default;
 }
 
 .pp .page-btn:disabled {
-    color: var(--pp-text-muted);
+    opacity: 0.4;
     cursor: default;
 }
 

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:jee="http://www.springframework.org/schema/jee"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/mvc
+           http://www.springframework.org/schema/mvc/spring-mvc.xsd
+           http://www.springframework.org/schema/jee
+           http://www.springframework.org/schema/jee/spring-jee.xsd">
+
+    <!-- 어노테이션 기반 MVC 활성화 -->
+    <mvc:annotation-driven/>
+
+    <!-- 컴포넌트 스캔: Controller, Service, Repository -->
+    <context:component-scan base-package="P00_layout, P01_auth, P02_dashboard, P03_notice, P03_suggestion, P05_stock, P06_prod, P07_work, P08_quality, P09_equip, P10_report, P11_masterdata"/>
+
+    <!-- JSP ViewResolver -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/"/>
+        <property name="suffix" value=".jsp"/>
+        <property name="order" value="2"/>
+    </bean>
+
+    <!-- 정적 리소스 서빙 (CSS, JS, 이미지 등) -->
+    <mvc:resources mapping="/static/**" location="/static/"/>
+
+    <!-- 파일 업로드 설정 (Commons Multipart) -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="10485760"/>
+        <property name="defaultEncoding" value="UTF-8"/>
+    </bean>
+
+    <!-- JNDI DataSource 빈 -->
+    <jee:jndi-lookup id="dataSource" jndi-name="java:/comp/env/jdbc/oracle"/>
+
+    <!-- 로그인 인터셉터 등록 -->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/login"/>
+            <mvc:exclude-mapping path="/changepw"/>
+            <mvc:exclude-mapping path="/static/**"/>
+            <mvc:exclude-mapping path="/**/*.css"/>
+            <mvc:exclude-mapping path="/**/*.js"/>
+            <mvc:exclude-mapping path="/**/*.png"/>
+            <mvc:exclude-mapping path="/**/*.jpg"/>
+            <mvc:exclude-mapping path="/**/*.jpeg"/>
+            <bean class="P00_layout.LoginInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+</beans>

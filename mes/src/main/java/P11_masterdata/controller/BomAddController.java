@@ -1,70 +1,41 @@
 package P11_masterdata.controller;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import P11_masterdata.DAO.BomDAO;
 import P11_masterdata.DTO.BomDTO;
 
-/**
- * Servlet implementation class BomAddController
- */
-@WebServlet("/BomAddController")
-public class BomAddController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Controller
+@RequestMapping("/BomAddController")
+public class BomAddController {
 
-	public BomAddController() {
-		super();
-
+	@GetMapping
+	public String doGet() {
+		return "redirect:/bom";
 	}
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.sendRedirect(request.getContextPath() + "/bom");
-	}
+	@PostMapping
+	public String doPost(
+			@RequestParam String bom_id,
+			@RequestParam String item_name,
+			@RequestParam(required = false, defaultValue = "0") String g_id) {
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		// 한글처리
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8;");
-		// 파라메터 확보(이름이 "" 인 것)
-		String bom_id = request.getParameter("bom_id");
-		String item_name = request.getParameter("item_name");
-		String g_id_str = request.getParameter("g_id");
-		int g_id = 0;
-		try {
-			g_id = Integer.parseInt(g_id_str);
-		} catch (Exception e) {
-			g_id = 0;
-		}
+		int gId = 0;
+		try { gId = Integer.parseInt(g_id); } catch (Exception e) {}
 
 		BomDAO bomDAO = new BomDAO();
-		String parent_item_id = bomDAO.selectItemIdByNameAndGroup(item_name, g_id);
-		// DTO 담기(가져오고!)
-		if (parent_item_id != null && bom_id != null && !bom_id.trim().equals("")) {
+		String parent_item_id = bomDAO.selectItemIdByNameAndGroup(item_name, gId);
+
+		if (parent_item_id != null && bom_id != null && !bom_id.trim().isEmpty()) {
 			BomDTO bomDTO = new BomDTO();
-		// content 넣기 바구니 안에
 			bomDTO.setBom_id(bom_id);
 			bomDTO.setParent_item_id(parent_item_id);
-
-		// 서비스로 DTO 보내기
-			addBom(bomDTO);
+			bomDAO.insertBom(bomDTO);
 		}
-		// 페이지 변경까지!
-		response.sendRedirect(request.getContextPath() + "/bom");
-	}
-	public int addBom(BomDTO bomDTO) {
-		// 서비스니까 DAO(DB)로 전달하기
-		BomDAO bomDAO = new BomDAO();
-		// DAO(DB)안에 DTO 담기
-		int add = bomDAO.insertBom(bomDTO);
-		// 리턴
-		return add;
+		return "redirect:/bom";
 	}
 }

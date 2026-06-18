@@ -1,155 +1,87 @@
 package P09_equip.controller;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import P07_work.WoService;
 import P09_equip.EqService;
 import P09_equip.DTO.EqLogDTO;
 
-@WebServlet("/eqlogmodify")
-public class EqLogModifyController extends HttpServlet {
-	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+@Controller
+@RequestMapping("/eqlogmodify")
+public class EqLogModifyController {
+
+	@Autowired
+	private EqService service;
+
+	@GetMapping
+	public String doGet(@RequestParam String logId, Model model) {
 		System.out.println("/eqlogmodify doGet 실행");
 
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		setEqInfo(request, response);
-		
-		request.getRequestDispatcher("/WEB-INF/views/P09_equip/modifyInsp.jsp").forward(request, response);
-	}
-
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/eqlogmodify doPost 실행");
-
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-//		String cmd = request.getParameter("cmd");
-//		
-//		if ("delete".equals(cmd))) {
-//			deleteInsp(request, response);
-//		}
-		modifyLog(request, response);
-		
-	}
-	
-	protected void setEqInfo(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/eqlogmodify setEqInfo 실행");
-		
-		String logId = request.getParameter("logId");
-		
 		EqLogDTO dto = new EqLogDTO();
 		dto.setLogId(logId);
-		
-		EqService service = new EqService();
-		
 		dto = service.getLogDetail(dto);
-		System.out.println(dto);
-		
-		String sDate = null;
-		String sTime = null;
-		
-		if(dto.getsTime() != null) {
-			
-			LocalDateTime ldt = dto.getsTime().toLocalDateTime();
-			
-			DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-			DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-			
-			sDate = ldt.format(dateFormatter);
-			sTime = ldt.format(timeFormatter);
-			
-		}
-		
-		String eDate = null;
-		String eTime = null;
-		
-		if(dto.geteTime() != null) {
-			
-			LocalDateTime ldt = dto.geteTime().toLocalDateTime();
-			
-			DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-			DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-			
-			eDate = ldt.format(dateFormatter);
-			eTime = ldt.format(timeFormatter);
-			
-		}
-		
-		request.setAttribute("logInfo", dto);
-		request.setAttribute("sDate", sDate);
-		request.setAttribute("sTime", sTime);
-		request.setAttribute("eDate", eDate);
-		request.setAttribute("eTime", eTime);
-	}
-	
 
-	protected void modifyLog(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/eqlogadd modifyLog 실행");
-		EqLogDTO dto = new EqLogDTO();
-		
-		String logId = request.getParameter("logId");
-		String eqId = request.getParameter("eqId");
-		String wId = request.getParameter("wId");
-		
-		String sDateStr = request.getParameter("sDate");
-		String sTimeStr = request.getParameter("sTime")+":00";
-		String sTimeFull = sDateStr + " " + sTimeStr;
-		Timestamp sTime = Timestamp.valueOf(sTimeFull);
-		
-		String eDateStr = request.getParameter("eDate");
-		System.out.println("eDate : " + eDateStr);
-		Timestamp eTime = null;
-		if (!("".equals(eDateStr))) {
-			String eTimeStr = request.getParameter("eTime")+":00";
-			String eTimeFull = eDateStr + " " + eTimeStr;
-			eTime = Timestamp.valueOf(eTimeFull);
-			dto.seteTime(eTime);
+		DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
+
+		String sDate = null, sTime = null;
+		if (dto.getsTime() != null) {
+			LocalDateTime ldt = dto.getsTime().toLocalDateTime();
+			sDate = ldt.format(dateFmt);
+			sTime = ldt.format(timeFmt);
 		}
-		
-		String inspType = request.getParameter("inspType");
-		String content = request.getParameter("content");
-		
+		String eDate = null, eTime = null;
+		if (dto.geteTime() != null) {
+			LocalDateTime ldt = dto.geteTime().toLocalDateTime();
+			eDate = ldt.format(dateFmt);
+			eTime = ldt.format(timeFmt);
+		}
+
+		model.addAttribute("logInfo", dto);
+		model.addAttribute("sDate", sDate);
+		model.addAttribute("sTime", sTime);
+		model.addAttribute("eDate", eDate);
+		model.addAttribute("eTime", eTime);
+
+		return "P09_equip/modifyInsp";
+	}
+
+	@PostMapping
+	public String modifyLog(
+			@RequestParam String logId,
+			@RequestParam String eqId,
+			@RequestParam String wId,
+			@RequestParam String sDate,
+			@RequestParam String sTime,
+			@RequestParam(required = false) String eDate,
+			@RequestParam(required = false) String eTime,
+			@RequestParam String inspType,
+			@RequestParam String content) {
+
+		System.out.println("/eqlogmodify modifyLog 실행");
+
+		EqLogDTO dto = new EqLogDTO();
 		dto.setLogId(logId);
 		dto.setEqId(eqId);
 		dto.setwId(wId);
-		dto.setsTime(sTime);
+		dto.setsTime(Timestamp.valueOf(sDate + " " + sTime + ":00"));
 		dto.setInspType(inspType);
 		dto.setInspContent(content);
-		
-		EqService service = new EqService();
-		int result = service.modifyLog(dto);
-		
-		System.out.println(result);
-		
-		response.sendRedirect("/mes/eqdetail?eqId=" + eqId);
-	}
-	
-//	protected void deleteInsp(HttpServletRequest request, HttpServletResponse response) throws IOException {
-//	    System.out.println("/workadd deleteInsp 실행");
-//
-//	    request.setCharacterEncoding("UTF-8");
-//	    response.setContentType("application/json; charset=UTF-8");
-//	    
-//	    String logId = request.getParameter("logId");
-//	    
-//	    EqService service = new EqService();
-//	    int result = service.deleteInsp(logId);
-//
-//	    System.out.println(result);
-//		
-//		response.sendRedirect("/mes/equipment");
-//	}
 
+		if (eDate != null && !eDate.isEmpty()) {
+			dto.seteTime(Timestamp.valueOf(eDate + " " + eTime + ":00"));
+		}
+
+		service.modifyLog(dto);
+		return "redirect:/eqdetail?eqId=" + eqId;
+	}
 }

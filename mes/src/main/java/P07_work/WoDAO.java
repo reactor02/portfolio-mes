@@ -2044,7 +2044,16 @@ public class WoDAO {
 	        try { if (ps != null) ps.close(); } catch (Exception e) {}
 	    }
 	}
-	
 
-	
+
+	public Connection getConnection() {
+		try {
+			Context ctx = new InitialContext();
+			DataSource dataFactory = (DataSource) ctx.lookup("java:/comp/env/jdbc/oracle");
+			return dataFactory.getConnection();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }

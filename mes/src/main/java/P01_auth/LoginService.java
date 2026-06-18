@@ -3,11 +3,15 @@ package P01_auth;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+
 import java.util.List;
+
+import org.springframework.stereotype.Service;
 
 import P02_dashboard.DashDTO;
 import P10_report.ReportDTO;
 
+@Service
 public class LoginService {
 	
 	public List<LoginDTO> login(LoginDTO d) {

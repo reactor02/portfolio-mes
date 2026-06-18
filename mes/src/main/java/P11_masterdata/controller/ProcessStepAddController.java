@@ -1,75 +1,56 @@
 package P11_masterdata.controller;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import P11_masterdata.DAO.ProcessDAO;
 import P11_masterdata.DTO.ProcessDTO;
 
-@WebServlet("/ProcessStepAddController")
-public class ProcessStepAddController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Controller
+@RequestMapping("/ProcessStepAddController")
+public class ProcessStepAddController {
 
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.sendRedirect(request.getContextPath() + "/process");
+	@GetMapping
+	public String doGet() {
+		return "redirect:/process";
 	}
 
-	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8;");
+	@PostMapping
+	public String doPost(
+			@RequestParam(required = false, defaultValue = "") String process_id,
+			@RequestParam(required = false, defaultValue = "") String step_name,
+			@RequestParam(required = false, defaultValue = "1") String seq) {
 
-		String processId = trimToEmpty(request.getParameter("process_id"));
-		String stepName = trimToEmpty(request.getParameter("step_name"));
-		int seq = parseIntOrDefault(request.getParameter("seq"), 1);
+		process_id = process_id.trim();
+		step_name = step_name.trim();
 
-		if (processId.equals("") || stepName.equals("")) {
-			response.sendRedirect(request.getContextPath() + "/process");
-			return;
+		if (process_id.isEmpty() || step_name.isEmpty()) {
+			return "redirect:/process";
 		}
 
-		if (seq < 1) {
-			seq = 1;
-		}
+		int seqInt = parseIntOrDefault(seq, 1);
+		if (seqInt < 1) seqInt = 1;
 
 		ProcessDTO processDTO = new ProcessDTO();
-		processDTO.setProcess_id(processId);
-		processDTO.setStep_name(stepName);
-		processDTO.setSeq(seq);
+		processDTO.setProcess_id(process_id);
+		processDTO.setStep_name(step_name);
+		processDTO.setSeq(seqInt);
 
 		ProcessDAO processDAO = new ProcessDAO();
-		int result = processDAO.insertProcessStep(processDTO);
+		processDAO.insertProcessStep(processDTO);
 
-		if (result > 0) {
-			response.sendRedirect(request.getContextPath() + "/process?processId=" + processId);
-		} else {
-			response.sendRedirect(request.getContextPath() + "/process?processId=" + processId);
-		}
+		return "redirect:/process?processId=" + process_id;
 	}
 
 	private int parseIntOrDefault(String value, int defaultValue) {
 		try {
-			if (value == null || value.trim().equals("")) {
-				return defaultValue;
-			}
+			if (value == null || value.trim().isEmpty()) return defaultValue;
 			return Integer.parseInt(value.trim());
 		} catch (Exception e) {
 			return defaultValue;
 		}
-	}
-
-	private String trimToEmpty(String value) {
-		if (value == null) {
-			return "";
-		}
-		return value.trim();
 	}
 }

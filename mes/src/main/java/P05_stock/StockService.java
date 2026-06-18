@@ -1,10 +1,17 @@
 package P05_stock;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
 public class StockService {
-    StockDAO stockDAO = new StockDAO();
+
+    @Autowired
+    StockDAO stockDAO;
 
     public Map getListStock(StockDTO stockDTO) {
         int size  = stockDTO.getSize();
@@ -42,17 +49,19 @@ public class StockService {
         return stockDAO.selectGroupList();
     }
 
-    // �԰� ��� (��� ��� �� AJAX ������)
+    // 입고 목록 (출고 등록 시 AJAX 요청)
     public List<StockDTO> getInList() {
         return stockDAO.selectInList();
     }
-    
+
     public List<StockDTO> getAvailableLotList(String keyword) {
         return stockDAO.selectAvailableLotList(keyword);
     }
+
     public List<StockDTO> getUserList(String keyword) {
         return stockDAO.selectUserList(keyword);
     }
+
     public int getStockNo(String itemId) {
         return stockDAO.selectStockNo(itemId);
     }

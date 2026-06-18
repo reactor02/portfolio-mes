@@ -1,142 +1,107 @@
 package P07_work.cotroller;
 
-import java.io.IOException;
 import java.sql.Date;
-import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import P07_work.SearchDTO;
 import P07_work.WoDTO;
 import P07_work.WoService;
 
-@WebServlet("/worklist")
-public class WoMainController extends HttpServlet {
+@Controller
+@RequestMapping("/worklist")
+public class WoMainController {
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/worklist doGet 실행");
-		
+    @Autowired
+    private WoService woService;
 
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8;");
+    @GetMapping
+    public String doGet(@RequestParam(value = "cmd", required = false) String cmd,
+                        @RequestParam(value = "page", required = false) String pageStr,
+                        @RequestParam(value = "status", required = false) String statusStr,
+                        @RequestParam(value = "startDate", required = false) String sDateStr,
+                        @RequestParam(value = "endDate", required = false) String eDateStr,
+                        @RequestParam(value = "keyword", required = false, defaultValue = "") String keyword,
+                        @RequestParam(value = "woId", required = false) String woId,
+                        Model model) {
+        System.out.println("/worklist doGet 실행");
 
-		String cmd = request.getParameter("cmd");
-		System.out.println("cmd : " + cmd);
-		
-		if ("search".equals(cmd)) {
-			search(request, response);
-		} else if ("detail".equals(cmd)) {
-			detail(request, response);
-			return;
-		} else {
-			getList(request, response);			
-		}
-		
-		
-		request.getRequestDispatcher("/WEB-INF/views/P07_work/main.jsp").forward(request, response);
-	}
+        if ("search".equals(cmd)) {
+            search(pageStr, statusStr, sDateStr, eDateStr, keyword, model);
+        } else if ("detail".equals(cmd)) {
+            return detail(woId);
+        } else {
+            getList(pageStr, model);
+        }
 
+        return "P07_work/main";
+    }
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8;");
-		System.out.println("/worklist doPost 실행");
-	}
-	
-	protected void getList (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/worklist getList 실행");
-		
-		int size = 10;
-		int page = 1;
-		
-		String pageStr = request.getParameter("page");
-		
-		try {
-			page = Integer.parseInt(pageStr);			
-		} catch (Exception e) {
+    @PostMapping
+    public String doPost() {
+        System.out.println("/worklist doPost 실행");
+        return "P07_work/main";
+    }
 
-		}
-		
-		WoDTO dto = new WoDTO();
-		dto.setSize(size);
-		dto.setPage(page);
-		
-		WoService service = new WoService();
-		Map woMap = service.getList(dto);
-		
-		// forward
-		request.setAttribute("woMap", woMap);
-		
-	}
-	
-	protected void search (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/worklist search 실행");
-		
+    private void getList(String pageStr, Model model) {
+        System.out.println("/worklist getList 실행");
 
-		int size = 10;
-		int page = 1;
+        int size = 10;
+        int page = 1;
 
-		String pageStr = request.getParameter("page");
-		
-		try {
-			page = Integer.parseInt(pageStr);			
-		} catch (Exception e) {
+        try {
+            page = Integer.parseInt(pageStr);
+        } catch (Exception e) {
+        }
 
-		}
-		
-		WoDTO dto = new WoDTO();
-		dto.setSize(size);
-		dto.setPage(page);
-		
-		int status = 0;
-		String statusStr = request.getParameter("status");
-		if (!("".equals(statusStr)) && statusStr != null) {
-			status = Integer.parseInt(statusStr);				
-		}
-		
-		String sDateStr = request.getParameter("startDate");
-		Date sDate = null;
-		if (!("".equals(sDateStr)) && sDateStr != null) {
-			sDate = Date.valueOf(sDateStr);
-		}
-		
-		String eDateStr = request.getParameter("endDate");
-		Date eDate = null;
-		if (!("".equals(eDateStr)) && eDateStr != null) {
-			eDate = Date.valueOf(eDateStr);
-		}
-		
-		String keyword = "";
-		keyword = request.getParameter("keyword").trim();
-		
-		SearchDTO search = new SearchDTO();
-		
-		search.setStatus(status);
-		search.setsDate(sDateStr);
-		search.seteDate(eDateStr);
-		search.setKeyword(keyword);
-		
-		WoService service = new WoService();
-		Map map = service.search(dto, search);
-		
-		// forward
-		request.setAttribute("woMap", map);
-		
-	}
-	
-	protected void detail (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/worklist detail 실행");
-		
-		String woId = request.getParameter("woId");
-		
-		String cp = request.getContextPath();
-		response.sendRedirect(cp + "/workorder?woId=" + woId);
-		
-	}
+        WoDTO dto = new WoDTO();
+        dto.setSize(size);
+        dto.setPage(page);
 
+        Map woMap = woService.getList(dto);
+        model.addAttribute("woMap", woMap);
+    }
+
+    private void search(String pageStr, String statusStr, String sDateStr, String eDateStr,
+                        String keyword, Model model) {
+        System.out.println("/worklist search 실행");
+
+        int size = 10;
+        int page = 1;
+
+        try {
+            page = Integer.parseInt(pageStr);
+        } catch (Exception e) {
+        }
+
+        WoDTO dto = new WoDTO();
+        dto.setSize(size);
+        dto.setPage(page);
+
+        int status = 0;
+        if (statusStr != null && !statusStr.isEmpty()) {
+            status = Integer.parseInt(statusStr);
+        }
+
+        SearchDTO search = new SearchDTO();
+        search.setStatus(status);
+        search.setsDate(sDateStr);
+        search.seteDate(eDateStr);
+        search.setKeyword(keyword != null ? keyword.trim() : "");
+
+        Map map = woService.search(dto, search);
+        model.addAttribute("woMap", map);
+    }
+
+    private String detail(String woId) {
+        System.out.println("/worklist detail 실행");
+        return "redirect:/workorder?woId=" + woId;
+    }
 }

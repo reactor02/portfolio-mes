@@ -92,11 +92,11 @@
     <div class="pagination">
       <c:choose>
         <c:when test="${page <= 1}">
-          <button class="page-btn disabled">이전</button>
+          <button class="page-btn disabled">&lt;</button>
         </c:when>
         <c:otherwise>
           <button class="page-btn"
-            onclick="location.href='${ctx}/notice/list?page=${page-1}&size=${size}&keyword=${keyword}'">이전</button>
+            onclick="location.href='${ctx}/notice/list?page=${page-1}&size=${size}&keyword=${keyword}'">&lt;</button>
         </c:otherwise>
       </c:choose>
 
@@ -114,11 +114,11 @@
 
       <c:choose>
         <c:when test="${page >= totalPages}">
-          <button class="page-btn disabled">다음</button>
+          <button class="page-btn disabled">&gt;</button>
         </c:when>
         <c:otherwise>
           <button class="page-btn"
-            onclick="location.href='${ctx}/notice/list?page=${page+1}&size=${size}&keyword=${keyword}'">다음</button>
+            onclick="location.href='${ctx}/notice/list?page=${page+1}&size=${size}&keyword=${keyword}'">&gt;</button>
         </c:otherwise>
       </c:choose>
     </div>

@@ -151,10 +151,10 @@
       <%-- 이전 --%>
       <c:choose>
         <c:when test="${map.page <= 1}">
-          <button class="page-btn" disabled>이전</button>
+          <button class="page-btn" disabled>&lt;</button>
         </c:when>
         <c:otherwise>
-          <a class="page-btn" href="/mes/prod/list?page=${map.page - 1}${searchParam}">이전</a>
+          <a class="page-btn" href="/mes/prod/list?page=${map.page - 1}${searchParam}">&lt;</a>
         </c:otherwise>
       </c:choose>
 
@@ -173,10 +173,10 @@
       <%-- 다음 --%>
       <c:choose>
         <c:when test="${map.page >= map.totalPage}">
-          <button class="page-btn" disabled>다음</button>
+          <button class="page-btn" disabled>&gt;</button>
         </c:when>
         <c:otherwise>
-          <a class="page-btn" href="/mes/prod/list?page=${map.page + 1}${searchParam}">다음</a>
+          <a class="page-btn" href="/mes/prod/list?page=${map.page + 1}${searchParam}">&gt;</a>
         </c:otherwise>
       </c:choose>
 

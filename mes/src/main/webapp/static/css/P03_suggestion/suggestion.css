@@ -310,29 +310,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    margin-top: 20px;
+    gap: 6px;
+    padding: 20px 0 4px;
 }
 
 .sg .page-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--sg-radius-sm);
-    border: 1px solid var(--sg-border);
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
     font-size: 13px;
     font-family: var(--sg-font);
-    color: var(--sg-text-secondary);
-    background: var(--sg-surface);
+    color: #555;
+    background: transparent;
     cursor: pointer;
-    transition: background var(--sg-transition), color var(--sg-transition);
+    text-decoration: none;
+    transition: background 0.15s;
 }
 
-.sg .page-btn:hover    { background: #F1F5F9; color: var(--sg-text-primary); }
-.sg .page-btn.active   { background: var(--sg-primary); color: #fff; border-color: var(--sg-primary); }
-.sg .page-btn.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+.sg .page-btn:hover    { background: #e8eaf3; }
+.sg .page-btn.active,
+.sg .page-btn.page-btn-active { background: #4a4a6a; color: #fff; font-weight: 700; }
+.sg .page-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 
 /* ── Action Header ── */
 .sg .action-header {

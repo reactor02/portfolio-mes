@@ -119,11 +119,11 @@
     <div class="pagination">
       <c:choose>
         <c:when test="${map.page == 1}">
-          <button class="page-btn" disabled>이전</button>
+          <button class="page-btn" disabled>&lt;</button>
         </c:when>
         <c:otherwise>
           <a class="page-btn"
-             href="${pageContext.request.contextPath}/suggestion/list?page=${map.page - 1}&size=${map.size}&searchKeyword=${sk}">이전</a>
+             href="${pageContext.request.contextPath}/suggestion/list?page=${map.page - 1}&size=${map.size}&searchKeyword=${sk}">&lt;</a>
         </c:otherwise>
       </c:choose>
 
@@ -141,11 +141,11 @@
 
       <c:choose>
         <c:when test="${map.page >= map.totalPages}">
-          <button class="page-btn" disabled>다음</button>
+          <button class="page-btn" disabled>&gt;</button>
         </c:when>
         <c:otherwise>
           <a class="page-btn"
-             href="${pageContext.request.contextPath}/suggestion/list?page=${map.page + 1}&size=${map.size}&searchKeyword=${sk}">다음</a>
+             href="${pageContext.request.contextPath}/suggestion/list?page=${map.page + 1}&size=${map.size}&searchKeyword=${sk}">&gt;</a>
         </c:otherwise>
       </c:choose>
     </div>

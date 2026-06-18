@@ -1,39 +1,29 @@
 package P11_masterdata.controller;
 
-import java.io.IOException;
 import java.util.List;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import P11_masterdata.DAO.ProcessDAO;
 import P11_masterdata.DTO.ProcessDTO;
 
-@WebServlet("/processDetail")
-public class ProcessDetailController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Controller
+@RequestMapping("/processDetail")
+public class ProcessDetailController {
 
-	public ProcessDetailController() {
-		super();
-	}
-
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8");
+	@GetMapping
+	public String doGet(
+			@RequestParam(required = false) String processId,
+			Model model) {
 
 		ProcessDAO processDAO = new ProcessDAO();
-		String processId = request.getParameter("processId");
 
-		// processId 없이 들어오면 첫 번째 공정을 기본으로 보여줌
-		if (processId == null || processId.trim().equals("")) {
+		if (processId == null || processId.trim().isEmpty()) {
 			List<ProcessDTO> processList = processDAO.selectProcessList();
-
 			if (processList != null && !processList.isEmpty()) {
 				processId = processList.get(0).getProcess_id();
 			}
@@ -43,22 +33,16 @@ public class ProcessDetailController extends HttpServlet {
 		List<ProcessDTO> materialList = null;
 		List<ProcessDTO> equipmentList = null;
 
-		if (processId != null && !processId.trim().equals("")) {
+		if (processId != null && !processId.trim().isEmpty()) {
 			processDetail = processDAO.selectProcessDetail(processId);
 			materialList = processDAO.selectMaterialList(processId);
 			equipmentList = processDAO.selectEquipmentList(processId);
 		}
 
-		request.setAttribute("processDetail", processDetail);
-		request.setAttribute("materialList", materialList);
-		request.setAttribute("equipmentList", equipmentList);
+		model.addAttribute("processDetail", processDetail);
+		model.addAttribute("materialList", materialList);
+		model.addAttribute("equipmentList", equipmentList);
 
-		RequestDispatcher dispatcher = request.getRequestDispatcher("/processDetail.jsp");
-		dispatcher.forward(request, response);
-	}
-
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		doGet(request, response);
+		return "P11_masterdata/processDetail";
 	}
 }

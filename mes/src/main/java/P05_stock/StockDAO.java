@@ -1,28 +1,31 @@
 package P05_stock;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import javax.naming.Context;
-import javax.naming.InitialContext;
+
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+@Repository
 public class StockDAO {
+
+    @Autowired
+    DataSource dataSource;
 
     private Connection getConn() {
         Connection conn = null;
         try {
-            Context ctx = new InitialContext();
-            DataSource dataFactory = (DataSource) ctx.lookup("java:/comp/env/jdbc/oracle");
-            conn = dataFactory.getConnection();
+            conn = dataSource.getConnection();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return conn;
     }
-    
-    
 
     public int selectTotal(StockDTO stockDTO) {
         int totalCount = 0;
@@ -107,7 +110,6 @@ public class StockDAO {
                 "            it.spec, " +
                 "            l.lot_id, " +
                 "            l.expiry_date, " +
-
                 "            u.ename, " +
                 "            u.dept_no, " +
                 "            u.retire, " +
@@ -139,7 +141,6 @@ public class StockDAO {
                 ") where rnum >= ? and rnum <= ?"
             );
         ) {
-            // 필터 파라미터 바인딩
             String ioType   = stockDTO.getFilterIoType();
             String vendorId = stockDTO.getFilterVendorId();
             String gId      = stockDTO.getFilterGId();
@@ -180,7 +181,6 @@ public class StockDAO {
                     dto.setG_id(rs.getString("g_id"));
                     dto.setItem_name(rs.getString("item_name"));
                     dto.setUnit(rs.getString("unit"));
-                    String specStr = rs.getString("spec");
                     dto.setSpec(rs.getString("spec"));
                     dto.setLot_id(rs.getString("lot_id"));
                     dto.setExpiry_date(rs.getDate("expiry_date"));
@@ -210,7 +210,7 @@ public class StockDAO {
             String ioId  = null;
 
             if (dto.getIo_type() == 0) {
-                // ���� �԰�: lot_seq�� �� LOT ID ���� ����������������������������
+                // 입고: lot_seq로 새 LOT ID 생성
                 ps = conn.prepareStatement(
                     "select 'lot_' || lot_seq.nextval as lot_id from dual"
                 );
@@ -239,14 +239,14 @@ public class StockDAO {
                 if (rs.next()) ioId = rs.getString("io_id");
                 rs.close();
                 ps.close();
-                
+
                 ps = conn.prepareStatement(
-                	    "update stock set stock_no = stock_no + ? where item_id = ?"
-                	);
-                	ps.setInt(1, dto.getLot_qty());
-                	ps.setString(2, dto.getItem_id());
-                	ps.executeUpdate();
-                	ps.close();
+                    "update stock set stock_no = stock_no + ? where item_id = ?"
+                );
+                ps.setInt(1, dto.getLot_qty());
+                ps.setString(2, dto.getItem_id());
+                ps.executeUpdate();
+                ps.close();
 
             } else {
                 lotId = dto.getLot_id();
@@ -260,7 +260,7 @@ public class StockDAO {
                 rs.close();
                 ps.close();
 
-                // �� ���� �߰�
+                // 재고 차감
                 ps = conn.prepareStatement(
                     "update stock set stock_no = stock_no - ? where item_id = ?"
                 );
@@ -268,7 +268,6 @@ public class StockDAO {
                 ps.setString(2, dto.getItem_id());
                 ps.executeUpdate();
                 ps.close();
-                
             }
 
             // io INSERT (입고/출고 공통)
@@ -333,7 +332,6 @@ public class StockDAO {
                 dto.setItem_id(rs.getString("item_id"));
                 dto.setItem_name(rs.getString("item_name"));
                 dto.setG_id(rs.getString("g_id"));
-                String specStr = rs.getString("spec");
                 dto.setSpec(rs.getString("spec"));
                 dto.setUnit(rs.getString("unit"));
                 list.add(dto);
@@ -364,7 +362,7 @@ public class StockDAO {
         return list;
     }
 
-    // �԰� ��� ��ȸ (��� ��� �� AJAX ������)
+    // 입고 목록 조회 (출고 등록 시 AJAX 요청)
     public List<StockDTO> selectInList() {
         List<StockDTO> list = new ArrayList<>();
         try (
@@ -402,32 +400,31 @@ public class StockDAO {
         }
         return list;
     }
-    
- // selectAvailableLotList() �߰�
+
     public List<StockDTO> selectAvailableLotList(String keyword) {
         List<StockDTO> list = new ArrayList<>();
         try (
             Connection conn = getConn();
             PreparedStatement ps = conn.prepareStatement(
-            		"select l.lot_id, l.expiry_date, " +
-            		"       it.item_id, it.item_name, it.spec, it.unit, " +
-            		"       u.emp_id, u.ename, " +
-            		"       nvl(( " +
-            		"           select sum(case when io_type = 0 then io_qty else -io_qty end) " +
-            		"           from io where lot_id = l.lot_id " +
-            		"       ), 0) as remaining_qty " +
-            		"from lot l " +
-            		"join item it on l.item_id = it.item_id " +
-            		"join user_info u on u.emp_id = ( " +
-            		"    select i2.emp_id from io i2 " +
-            		"    where i2.lot_id = l.lot_id and i2.io_type = 0 and rownum = 1 " +
-            		") " +
-            		"where nvl(( " +
-            		"    select sum(case when io_type = 0 then io_qty else -io_qty end) " +
-            		"    from io where lot_id = l.lot_id " +
-            		"), 0) > 0 " +
-            		"and (it.item_name like ? or l.lot_id like ?) " +
-            		"order by l.lot_id desc"
+                "select l.lot_id, l.expiry_date, " +
+                "       it.item_id, it.item_name, it.spec, it.unit, " +
+                "       u.emp_id, u.ename, " +
+                "       nvl(( " +
+                "           select sum(case when io_type = 0 then io_qty else -io_qty end) " +
+                "           from io where lot_id = l.lot_id " +
+                "       ), 0) as remaining_qty " +
+                "from lot l " +
+                "join item it on l.item_id = it.item_id " +
+                "join user_info u on u.emp_id = ( " +
+                "    select i2.emp_id from io i2 " +
+                "    where i2.lot_id = l.lot_id and i2.io_type = 0 and rownum = 1 " +
+                ") " +
+                "where nvl(( " +
+                "    select sum(case when io_type = 0 then io_qty else -io_qty end) " +
+                "    from io where lot_id = l.lot_id " +
+                "), 0) > 0 " +
+                "and (it.item_name like ? or l.lot_id like ?) " +
+                "order by l.lot_id desc"
             );
         ) {
             String kw = "%" + (keyword == null ? "" : keyword) + "%";
@@ -453,7 +450,7 @@ public class StockDAO {
         }
         return list;
     }
-    
+
     public List<StockDTO> selectUserList(String keyword) {
         List<StockDTO> list = new ArrayList<>();
         try (
@@ -483,7 +480,7 @@ public class StockDAO {
         }
         return list;
     }
-    
+
     // 유통기한 임박 LOT 수 (오늘 ~ 10일 이내)
     public int selectExpiryWarnCount() {
         int count = 0;
@@ -552,6 +549,4 @@ public class StockDAO {
         }
         return result;
     }
-    
-    
 }

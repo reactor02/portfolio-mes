@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.stereotype.Service;
+
 import P01_auth.DTO.UserWoDTO;
 import P07_work.SearchDTO;
 import P07_work.WoDTO;
@@ -15,6 +17,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
+@Service
 public class QcService {
 	
 	public Map getList(QcDTO dto) {

@@ -1,43 +1,33 @@
 package P11_masterdata.controller;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import P11_masterdata.DAO.BomDAO;
 
-@WebServlet("/BomDetailDeleteController")
-public class BomDetailDeleteController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Controller
+@RequestMapping("/BomDetailDeleteController")
+public class BomDetailDeleteController {
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.sendRedirect(request.getContextPath() + "/bom");
+	@GetMapping
+	public String doGet() {
+		return "redirect:/bom";
 	}
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8");
-
-		String bomId = request.getParameter("bom_id");
-		String sBomDetailId = request.getParameter("bom_detail_id");
+	@PostMapping
+	public String doPost(
+			@RequestParam String bom_id,
+			@RequestParam(required = false, defaultValue = "0") String bom_detail_id) {
 
 		int bomDetailId = 0;
-		try {
-			bomDetailId = Integer.parseInt(sBomDetailId);
-		} catch (Exception e) {
-			bomDetailId = 0;
-		}
+		try { bomDetailId = Integer.parseInt(bom_detail_id); } catch (Exception e) {}
 
 		BomDAO bomDAO = new BomDAO();
 		bomDAO.deleteBomDetail(bomDetailId);
 
-		response.sendRedirect(request.getContextPath() + "/bomDetail?bomId=" + bomId);
+		return "redirect:/bomDetail?bomId=" + bom_id;
 	}
 }

@@ -1,47 +1,52 @@
 package P05_stock;
 
-import java.io.IOException;
 import java.util.Map;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
+
 import javax.servlet.http.HttpServletResponse;
 
-@WebServlet("/stock")
-public class Stock2Conttroller extends HttpServlet {
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-    Stock2Service service = new Stock2Service();
+@Controller
+@RequestMapping("/stock")
+public class Stock2Conttroller {
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setContentType("text/html; charset=UTF-8");
+    @Autowired
+    Stock2Service service;
 
-        int size = 10;
-        int page = 1;
-        String sSize         = request.getParameter("size");
-        String sPage         = request.getParameter("page");
-        String filterGId     = request.getParameter("filterGId");
-        String filterKeyword = request.getParameter("filterKeyword");
-        String filterStock   = request.getParameter("filterStock");
+    @GetMapping
+    public String doGet(
+            @RequestParam(required = false) String size,
+            @RequestParam(required = false) String page,
+            @RequestParam(required = false) String filterGId,
+            @RequestParam(required = false) String filterKeyword,
+            @RequestParam(required = false) String filterStock,
+            Model model) {
 
-        try { if (sSize != null) size = Integer.parseInt(sSize); } catch (Exception e) {}
-        try { if (sPage != null) page = Integer.parseInt(sPage); } catch (Exception e) {}
+        int iSize = 10;
+        int iPage = 1;
+        try { if (size != null) iSize = Integer.parseInt(size); } catch (Exception e) {}
+        try { if (page != null) iPage = Integer.parseInt(page); } catch (Exception e) {}
         if (filterGId     != null && filterGId.isEmpty())     filterGId     = null;
         if (filterKeyword != null && filterKeyword.isEmpty()) filterKeyword = null;
         if (filterStock   != null && filterStock.isEmpty())   filterStock   = null;
 
         Stock2DTO dto = new Stock2DTO();
-        dto.setSize(size);
-        dto.setPage(page);
+        dto.setSize(iSize);
+        dto.setPage(iPage);
         dto.setFilterGId(filterGId);
         dto.setFilterKeyword(filterKeyword);
         dto.setFilterStock(filterStock);
 
         Map map = service.getStockList(dto);
-        map.put("size",          size);
-        map.put("page",          page);
+        map.put("size",          iSize);
+        map.put("page",          iPage);
         map.put("groupList",     service.getGroupList());
         map.put("filterGId",     filterGId);
         map.put("filterKeyword", filterKeyword);
@@ -50,27 +55,23 @@ public class Stock2Conttroller extends HttpServlet {
         map.put("normalStock",   service.getNormalCount());
         map.put("lackStock",     service.getLackCount());
 
-        request.setAttribute("map", map);
-        request.getRequestDispatcher("WEB-INF/views/P05_stock/stock.jsp")
-               .forward(request, response);
+        model.addAttribute("map", map);
+        return "P05_stock/stock";
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
+    @PostMapping
+    public Object doPost(
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String item_id,
+            @RequestParam(required = false) String safe_no) {
 
-        String action = request.getParameter("action");
         if ("updateSafeNo".equals(action)) {
-            String itemId = request.getParameter("item_id");  // ★ stock_id → item_id
             int safeNo = 0;
-            try { safeNo = Integer.parseInt(request.getParameter("safe_no")); } catch (Exception e) {}
-            service.updateSafeNo(itemId, safeNo);  // ★ stockId → itemId
-
-            response.setContentType("application/json; charset=UTF-8");
-            response.getWriter().write("{\"result\":\"ok\"}");
-            return;
+            try { safeNo = Integer.parseInt(safe_no); } catch (Exception e) {}
+            service.updateSafeNo(item_id, safeNo);
+            return ResponseEntity.ok("{\"result\":\"ok\"}");
         }
 
-        response.sendRedirect("/mes/stock");
+        return "redirect:/stock";
     }
 }

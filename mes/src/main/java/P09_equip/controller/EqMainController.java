@@ -1,149 +1,71 @@
 package P09_equip.controller;
 
-import java.io.IOException;
-import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import P07_work.SearchDTO;
-import P07_work.WoDTO;
-import P07_work.WoService;
 import P09_equip.EqService;
 import P09_equip.DTO.EqDTO;
 import P09_equip.DTO.EqSearchDTO;
 
+@Controller
+@RequestMapping("/equipment")
+public class EqMainController {
 
-@WebServlet("/equipment")
-public class EqMainController extends HttpServlet {
-	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	@Autowired
+	private EqService service;
+
+	@GetMapping
+	public String doGet(
+			@RequestParam(required = false) String cmd,
+			@RequestParam(required = false) String eqId,
+			@RequestParam(defaultValue = "1") String page,
+			@RequestParam(required = false) String status,
+			@RequestParam(required = false) String keyword,
+			Model model) {
+
 		System.out.println("/equipment doGet 실행");
 
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8;");
-		
-		getAllList(request, response);
-		
-		String cmd = request.getParameter("cmd");
-		System.out.println("cmd : " + cmd);
-		
-		if ("search".equals(cmd)) {
-			search(request, response);
-		} else if ("detail".equals(cmd)) {
-			detail(request, response);
-			return;
+		// 항상 전체 목록 세팅
+		List<EqDTO> eqAllList = service.getAllList();
+		model.addAttribute("eqAllList", eqAllList);
+
+		if ("detail".equals(cmd) && eqId != null) {
+			return "redirect:/eqdetail?eqId=" + eqId;
+		} else if ("search".equals(cmd)) {
+			int pageNum = 1;
+			try { pageNum = Integer.parseInt(page); } catch (Exception e) {}
+
+			EqDTO dto = new EqDTO();
+			dto.setSize(10);
+			dto.setPage(pageNum);
+
+			String statusVal = ("전체".equals(status)) ? "" : status;
+
+			EqSearchDTO search = new EqSearchDTO();
+			search.setStatus(statusVal != null ? statusVal : "");
+			search.setKeyword(keyword != null ? keyword.trim() : "");
+
+			Map eqMap = service.search(dto, search);
+			model.addAttribute("eqMap", eqMap);
 		} else {
-			getList(request, response);			
+			int pageNum = 1;
+			try { pageNum = Integer.parseInt(page); } catch (Exception e) {}
+
+			EqDTO dto = new EqDTO();
+			dto.setSize(10);
+			dto.setPage(pageNum);
+
+			Map eqMap = service.getList(dto);
+			model.addAttribute("eqMap", eqMap);
 		}
-		
-		request.getRequestDispatcher("/WEB-INF/views/P09_equip/main.jsp").forward(request, response);
+
+		return "P09_equip/main";
 	}
-
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/equipment doPost 실행");
-
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8;");
-		
-	}
-	
-	protected void getList (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/equipment getList 실행");
-		
-		int size = 10;
-		int page = 1;
-		
-		String pageStr = request.getParameter("page");
-		
-		try {
-			page = Integer.parseInt(pageStr);			
-		} catch (Exception e) {
-
-		}
-		
-		EqDTO dto = new EqDTO();
-		dto.setSize(size);
-		dto.setPage(page);
-		
-		EqService service = new EqService();
-		Map eqMap = service.getList(dto);
-		
-		// forward
-		request.setAttribute("eqMap", eqMap);
-		
-		System.out.println(eqMap);
-		System.out.println(eqMap.get("list"));
-		
-	}
-	
-	protected void getAllList (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/equipment getAllList 실행");
-		
-		EqService service = new EqService();
-		List<EqDTO> list = service.getAllList();
-		
-		// forward
-		request.setAttribute("eqAllList", list);
-		
-	}
-	
-	protected void search (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/equipment search 실행");
-
-		int size = 10;
-		int page = 1;
-
-		String pageStr = request.getParameter("page");
-		
-		try {
-			page = Integer.parseInt(pageStr);			
-		} catch (Exception e) {
-
-		}
-		
-		EqDTO dto = new EqDTO();
-		dto.setSize(size);
-		dto.setPage(page);
-		
-		// 검색
-		String status = request.getParameter("status");
-		if ("전체".equals(status)) {
-		    status = "";
-		}
-		
-
-		String keyword = "";
-		keyword = request.getParameter("keyword").trim();
-		
-		EqSearchDTO search = new EqSearchDTO();
-		
-		search.setStatus(status);
-		search.setKeyword(keyword);
-		
-		// service
-		EqService service = new EqService();
-		Map eqMap = service.search(dto, search);
-		
-		// forward
-		request.setAttribute("eqMap", eqMap);
-		
-		System.out.println(eqMap);
-		System.out.println(eqMap.get("list"));
-	}
-	
-	protected void detail (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/equipment detail 실행");
-		
-		String eqId = request.getParameter("eqId");
-		
-		String cp = request.getContextPath();
-		response.sendRedirect(cp + "/eqdetail?eqId=" + eqId);
-	}
-
 }

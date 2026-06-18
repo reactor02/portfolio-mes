@@ -1,71 +1,54 @@
 package P11_masterdata.controller;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import P11_masterdata.DAO.BomDAO;
 import P11_masterdata.DTO.BomDTO;
 
-@WebServlet("/BomDetailUpdateController")
-public class BomDetailUpdateController extends HttpServlet {
-	private static final long serialVersionUID = 1L;
+@Controller
+@RequestMapping("/BomDetailUpdateController")
+public class BomDetailUpdateController {
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		response.sendRedirect(request.getContextPath() + "/bom");
+	@GetMapping
+	public String doGet() {
+		return "redirect:/bom";
 	}
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-
-		request.setCharacterEncoding("utf-8");
-		response.setContentType("text/html; charset=utf-8");
-
-		String bomId = request.getParameter("bom_id");
-		String childItemId = request.getParameter("child_item_id");
-		String sBomDetailId = request.getParameter("bom_detail_id");
-		String sEa = request.getParameter("ea");
+	@PostMapping
+	public String doPost(
+			@RequestParam String bom_id,
+			@RequestParam String child_item_id,
+			@RequestParam(required = false, defaultValue = "0") String bom_detail_id,
+			@RequestParam(required = false, defaultValue = "0") String ea) {
 
 		int bomDetailId = 0;
-		BigDecimal ea = BigDecimal.ZERO;
-
-		try {
-			bomDetailId = Integer.parseInt(sBomDetailId);
-		} catch (Exception e) {
-			bomDetailId = 0;
-		}
-
-		try {
-			ea = new BigDecimal(sEa);
-		} catch (Exception e) {
-			ea = BigDecimal.ZERO;
-		}
+		BigDecimal eaVal = BigDecimal.ZERO;
+		try { bomDetailId = Integer.parseInt(bom_detail_id); } catch (Exception e) {}
+		try { eaVal = new BigDecimal(ea); } catch (Exception e) {}
 
 		BomDAO bomDAO = new BomDAO();
 
-		if (bomId == null || bomId.trim().equals("")
-				|| childItemId == null || childItemId.trim().equals("")
+		if (bom_id == null || bom_id.trim().isEmpty()
+				|| child_item_id == null || child_item_id.trim().isEmpty()
 				|| bomDetailId <= 0
-				|| ea.compareTo(BigDecimal.ZERO) <= 0
-				|| !bomDAO.isValidChildItem(null, childItemId)) {
-			response.sendRedirect(request.getContextPath() + "/bomDetail?bomId=" + bomId);
-			return;
+				|| eaVal.compareTo(BigDecimal.ZERO) <= 0
+				|| !bomDAO.isValidChildItem(null, child_item_id)) {
+			return "redirect:/bomDetail?bomId=" + bom_id;
 		}
 
 		BomDTO bomDTO = new BomDTO();
-		bomDTO.setBom_id(bomId);
+		bomDTO.setBom_id(bom_id);
 		bomDTO.setBom_detail_id(bomDetailId);
-		bomDTO.setChild_item_id(childItemId);
-		bomDTO.setEa(ea);
+		bomDTO.setChild_item_id(child_item_id);
+		bomDTO.setEa(eaVal);
 
 		bomDAO.updateBomDetail(bomDTO);
-
-		response.sendRedirect(request.getContextPath() + "/bomDetail?bomId=" + bomId);
+		return "redirect:/bomDetail?bomId=" + bom_id;
 	}
 }

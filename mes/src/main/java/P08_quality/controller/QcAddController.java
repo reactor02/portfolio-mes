@@ -1,146 +1,110 @@
 package P08_quality.controller;
 
-import java.io.IOException;
 import java.sql.Date;
 import java.util.List;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import P01_auth.DTO.UserWoDTO;
 import P07_work.WoDTO;
-import P07_work.WoService;
 import P08_quality.QcAddDTO;
 import P08_quality.QcService;
 
-@WebServlet("/qcadd")
-public class QcAddController extends HttpServlet {
-	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+@Controller
+@RequestMapping("/qcadd")
+public class QcAddController {
+
+	@Autowired
+	private QcService service;
+
+	@GetMapping
+	public String doGet(
+			@RequestParam(required = false) String cmd,
+			@RequestParam(required = false) String woId,
+			@RequestParam(required = false) String keyword,
+			Model model) {
+
 		System.out.println("/qcadd doGet 실행");
 
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		String cmd = request.getParameter("cmd");
 		if ("getWo".equals(cmd)) {
-			getWo(request, response);
-			return;
+			return null; // handled by separate @ResponseBody endpoint
 		}
-		
 		if ("searchWorker".equals(cmd)) {
-			searchWorker(request, response);
-			return;
+			return null; // handled by separate @ResponseBody endpoint
 		}
-		
-		getWoList(request, response);
-		
-		request.getRequestDispatcher("/WEB-INF/views/P08_quality/add.jsp").forward(request, response);
-	}
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcadd doPost 실행");
-
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		addQc(request, response);
-		
-		response.sendRedirect("/mes/qclist");
-	}
-	
-	protected void getWoList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		System.out.println("/qcadd getWoList 실행");
-
-		request.setCharacterEncoding("UTF-8");
-		response.setContentType("text/html; charset=UTF-8;");
-		
-		QcService service = new QcService();
 		List woList = service.getWoList();
-		
-		System.out.println(woList);
-		
-		request.setAttribute("woList", woList);
+		model.addAttribute("woList", woList);
+
+		return "P08_quality/add";
 	}
-	
-	protected void getWo(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+	@GetMapping(params = "cmd=getWo")
+	@ResponseBody
+	public String getWo(@RequestParam String woId) {
 		System.out.println("/qcadd getWo 실행");
 
-		String woId = request.getParameter("woId");
-		
 		WoDTO woDTO = new WoDTO();
 		woDTO.setWoId(woId);
-		
-		QcService service = new QcService();
 		woDTO = service.setWo(woDTO);
-		
-		System.out.println(woDTO);
-		
-		response.setContentType("application/json; charset=UTF-8");
 
-		String json = "{"
-		    + "\"woId\":\"" + woDTO.getWoId() + "\","
-		    + "\"itemId\":\"" + woDTO.getItemId() + "\","
-		    + "\"itemName\":\"" + woDTO.getItemName() + "\","
-		    + "\"qty\":\"" + woDTO.getWoQty() + "\","
-    		+ "\"woDate\":\"" + woDTO.getWorkDate() + "\""
-		    + "}";
-
-		response.getWriter().write(json);
-	}
-	
-	protected void searchWorker(HttpServletRequest request, HttpServletResponse response) throws IOException {
-	    System.out.println("/qcadd searchWorker 실행");
-
-	    String keyword = request.getParameter("keyword").trim();
-
-	    QcService service = new QcService();
-	    List<UserWoDTO> list = service.searchWorker(keyword);
-
-	    StringBuilder json = new StringBuilder("[");
-	    for (int i = 0; i < list.size(); i++) {
-	        UserWoDTO e = list.get(i);
-
-	        json.append("{")
-	            .append("\"empId\":\"").append(e.getEmpId()).append("\",")
-	            .append("\"empName\":\"").append(e.geteName()).append("\"")
-	            .append("}");
-
-	        if (i < list.size() - 1) json.append(",");
-	    }
-	    json.append("]");
-
-	    response.getWriter().write(json.toString());
-	}
-	
-	protected void addQc(HttpServletRequest request, HttpServletResponse response) throws IOException {
-	    System.out.println("/qcadd addQc 실행");
-
-	    String woId = request.getParameter("woId");
-	    Date sDate = Date.valueOf(request.getParameter("qcDate"));
-	    String director = ""; // 로그인 정보 받아오기
-	    String worker = request.getParameter("workerId");
-	    String content = request.getParameter("content");
-	    int status = 10;
-	    
-	    QcAddDTO addDTO = new QcAddDTO();
-	    
-	    addDTO.setWoId(woId);
-	    addDTO.setsDate(sDate);
-	    addDTO.setDirector(director);
-	    addDTO.setWorker(worker);
-	    addDTO.setContent(content);
-	    addDTO.setStatus(status);
-	    
-	    QcService service = new QcService();
-	    int result = service.addQc(addDTO);
-	    int woStatus = service.woStatus(addDTO);
-
-	    System.out.println(result + ", " + woStatus);
-	    
+		return "{"
+			+ "\"woId\":\"" + woDTO.getWoId() + "\","
+			+ "\"itemId\":\"" + woDTO.getItemId() + "\","
+			+ "\"itemName\":\"" + woDTO.getItemName() + "\","
+			+ "\"qty\":\"" + woDTO.getWoQty() + "\","
+			+ "\"woDate\":\"" + woDTO.getWorkDate() + "\""
+			+ "}";
 	}
 
+	@GetMapping(params = "cmd=searchWorker")
+	@ResponseBody
+	public String searchWorker(@RequestParam String keyword) {
+		System.out.println("/qcadd searchWorker 실행");
+
+		List<UserWoDTO> list = service.searchWorker(keyword.trim());
+
+		StringBuilder json = new StringBuilder("[");
+		for (int i = 0; i < list.size(); i++) {
+			UserWoDTO e = list.get(i);
+			json.append("{")
+				.append("\"empId\":\"").append(e.getEmpId()).append("\",")
+				.append("\"empName\":\"").append(e.geteName()).append("\"")
+				.append("}");
+			if (i < list.size() - 1) json.append(",");
+		}
+		json.append("]");
+		return json.toString();
+	}
+
+	@PostMapping
+	public String doPost(
+			@RequestParam String woId,
+			@RequestParam String qcDate,
+			@RequestParam(required = false, defaultValue = "") String workerId,
+			@RequestParam(required = false, defaultValue = "") String content) {
+
+		System.out.println("/qcadd doPost 실행");
+
+		QcAddDTO addDTO = new QcAddDTO();
+		addDTO.setWoId(woId);
+		addDTO.setsDate(Date.valueOf(qcDate));
+		addDTO.setDirector("");
+		addDTO.setWorker(workerId);
+		addDTO.setContent(content);
+		addDTO.setStatus(10);
+
+		int result = service.addQc(addDTO);
+		int woStatus = service.woStatus(addDTO);
+		System.out.println(result + ", " + woStatus);
+
+		return "redirect:/qclist";
+	}
 }

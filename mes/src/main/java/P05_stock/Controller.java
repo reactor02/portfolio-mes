@@ -1,28 +1,46 @@
 package P05_stock;
-import java.io.IOException;
+
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-
 import java.util.List;
 import java.util.Map;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-@WebServlet("/io")
-public class Controller extends HttpServlet {
-    StockService service = new StockService();
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
+@org.springframework.stereotype.Controller
+@RequestMapping("/io")
+public class Controller {
 
-        String action = request.getParameter("action");
+    @Autowired
+    StockService service;
+
+    @GetMapping
+    public Object doGet(
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String size,
+            @RequestParam(required = false) String page,
+            @RequestParam(required = false) String filterIoType,
+            @RequestParam(required = false) String filterVendorId,
+            @RequestParam(required = false) String filterGId,
+            @RequestParam(required = false) String filterItemId,
+            @RequestParam(required = false) String filterDateFrom,
+            @RequestParam(required = false) String filterDateTo,
+            @RequestParam(required = false) String filterKeyword,
+            @RequestParam(required = false) String filterExpiry,
+            Model model) {
 
         // 출고 등록 시 LOT 목록 AJAX 요청
         if ("getInList".equals(action)) {
@@ -38,21 +56,18 @@ public class Controller extends HttpServlet {
                   .append("\"item_name\":").append("\"").append(d.getItem_name() != null ? d.getItem_name() : "").append("\",")
                   .append("\"lot_id\":"    ).append("\"").append(d.getLot_id()).append("\",")
                   .append("\"lot_qty\":"   ).append(d.getLot_qty()).append(",")
-                  // ★ 수정: spec 따옴표 추가 + null 처리
                   .append("\"spec\":"      ).append("\"").append(d.getSpec() != null ? d.getSpec() : "").append("\",")
                   .append("\"unit\":"      ).append("\"").append(d.getUnit() != null ? d.getUnit() : "").append("\"")
                   .append("}");
             }
             sb.append("]");
-
-            response.setContentType("application/json; charset=UTF-8");
-            response.getWriter().write(sb.toString());
-            return;
+            return ResponseEntity.ok(sb.toString());
         }
+
         if ("getLotList".equals(action)) {
-            String keyword = request.getParameter("keyword");
-            if (keyword != null && keyword.trim().isEmpty()) keyword = null;
-            List<StockDTO> lotList = service.getAvailableLotList(keyword);
+            String kw = keyword;
+            if (kw != null && kw.trim().isEmpty()) kw = null;
+            List<StockDTO> lotList = service.getAvailableLotList(kw);
 
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < lotList.size(); i++) {
@@ -64,7 +79,6 @@ public class Controller extends HttpServlet {
                   .append("\"expiry_date\":").append("\"").append(d.getExpiry_date() != null ? d.getExpiry_date().toString() : "").append("\",")
                   .append("\"item_id\":"    ).append("\"").append(d.getItem_id()).append("\",")
                   .append("\"item_name\":"  ).append("\"").append(d.getItem_name() != null ? d.getItem_name() : "").append("\",")
-                  // ★ 수정: spec 따옴표 추가 + null 처리
                   .append("\"spec\":"       ).append("\"").append(d.getSpec() != null ? d.getSpec() : "").append("\",")
                   .append("\"unit\":"       ).append("\"").append(d.getUnit() != null ? d.getUnit() : "").append("\",")
                   .append("\"emp_id\":"     ).append("\"").append(d.getEmp_id()).append("\",")
@@ -72,15 +86,13 @@ public class Controller extends HttpServlet {
                   .append("}");
             }
             sb.append("]");
-
-            response.setContentType("application/json; charset=UTF-8");
-            response.getWriter().write(sb.toString());
-            return;
+            return ResponseEntity.ok(sb.toString());
         }
+
         if ("getUserList".equals(action)) {
-            String keyword = request.getParameter("keyword");
-            if (keyword != null && keyword.trim().isEmpty()) keyword = null;
-            List<StockDTO> userList = service.getUserList(keyword);
+            String kw = keyword;
+            if (kw != null && kw.trim().isEmpty()) kw = null;
+            List<StockDTO> userList = service.getUserList(kw);
 
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < userList.size(); i++) {
@@ -93,29 +105,14 @@ public class Controller extends HttpServlet {
                   .append("}");
             }
             sb.append("]");
-
-            response.setContentType("application/json; charset=UTF-8");
-            response.getWriter().write(sb.toString());
-            return;
+            return ResponseEntity.ok(sb.toString());
         }
 
         // 목록 페이지 조회
-        response.setContentType("text/html; charset=UTF-8;");
-
-        int size = 10;
-        int page = 1;
-        String sSize = request.getParameter("size");
-        String sPage = request.getParameter("page");
-        String filterIoType   = request.getParameter("filterIoType");
-        String filterVendorId = request.getParameter("filterVendorId");
-        String filterGId      = request.getParameter("filterGId");
-        String filterItemId   = request.getParameter("filterItemId");
-        String filterDateFrom = request.getParameter("filterDateFrom");
-        String filterDateTo   = request.getParameter("filterDateTo");
-        String filterKeyword  = request.getParameter("filterKeyword");
-        String filterExpiry   = request.getParameter("filterExpiry");
-        try { if (sSize != null) size = Integer.parseInt(sSize); } catch (Exception e) { e.printStackTrace(); }
-        try { if (sPage != null) page = Integer.parseInt(sPage); } catch (Exception e) { e.printStackTrace(); }
+        int iSize = 10;
+        int iPage = 1;
+        try { if (size != null) iSize = Integer.parseInt(size); } catch (Exception e) { e.printStackTrace(); }
+        try { if (page != null) iPage = Integer.parseInt(page); } catch (Exception e) { e.printStackTrace(); }
         if (filterIoType   != null && filterIoType.isEmpty())   filterIoType   = null;
         if (filterVendorId != null && filterVendorId.isEmpty()) filterVendorId = null;
         if (filterGId      != null && filterGId.isEmpty())      filterGId      = null;
@@ -126,8 +123,8 @@ public class Controller extends HttpServlet {
         if (filterExpiry   != null && filterExpiry.isEmpty())   filterExpiry   = null;
 
         StockDTO stockDTO = new StockDTO();
-        stockDTO.setSize(size);
-        stockDTO.setPage(page);
+        stockDTO.setSize(iSize);
+        stockDTO.setPage(iPage);
         stockDTO.setFilterIoType(filterIoType);
         stockDTO.setFilterVendorId(filterVendorId);
         stockDTO.setFilterGId(filterGId);
@@ -138,8 +135,8 @@ public class Controller extends HttpServlet {
         stockDTO.setFilterExpiry(filterExpiry);
 
         Map map = service.getListStock(stockDTO);
-        map.put("size",       size);
-        map.put("page",       page);
+        map.put("size",       iSize);
+        map.put("page",       iPage);
         map.put("vendorList", service.getVendorList());
         map.put("itemList",   service.getItemList());
         map.put("groupList",  service.getGroupList());
@@ -154,14 +151,12 @@ public class Controller extends HttpServlet {
         map.put("expiryWarnCount", service.getExpiryWarnCount());
         map.put("expiryOverCount", service.getExpiryOverCount());
 
-        request.setAttribute("map", map);
-        request.getRequestDispatcher("WEB-INF/views/P05_stock/io.jsp").forward(request, response);
+        model.addAttribute("map", map);
+        return "P05_stock/io";
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-
+    @PostMapping
+    public Object doPost(HttpServletRequest request, Model model) {
         StockDTO dto = new StockDTO();
         try {
             dto.setIo_type(Integer.parseInt(request.getParameter("io_type")));
@@ -191,18 +186,17 @@ public class Controller extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         if (dto.getIo_type() == 1) {  // 출고 시 재고 검사
             int currentStock = service.getStockNo(dto.getItem_id());
             if (currentStock - dto.getLot_qty() < 0) {
-                request.setAttribute("errorMsg",
+                model.addAttribute("errorMsg",
                     "재고 부족입니다. (현재 재고: " + currentStock + ")");
-                request.getRequestDispatcher("WEB-INF/views/P05_stock/io.jsp")
-                       .forward(request, response);
-                return;
+                return "P05_stock/io";
             }
         }
 
         service.insert(dto);
-        response.sendRedirect("/mes/io");
+        return "redirect:/io";
     }
 }

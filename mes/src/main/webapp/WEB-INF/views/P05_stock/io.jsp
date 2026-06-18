@@ -243,11 +243,11 @@
 					<div class="pagination">
 						<%-- 이전 버튼 --%>
 						<c:if test="<%=pageNum == 1%>">
-							<a>이전</a>
+							<a>&lt;</a>
 						</c:if>
 						<c:if test="<%=pageNum != 1%>">
 							<a
-								href="/mes/io?page=<%=pageNum-1%>&size=${map.size}<%=filterParams%>">이전</a>
+								href="/mes/io?page=<%=pageNum-1%>&size=${map.size}<%=filterParams%>">&lt;</a>
 						</c:if>
 
 						<%-- 페이지 번호 --%>
@@ -264,11 +264,11 @@
 
 						<%-- 다음 버튼 --%>
 						<c:if test="<%=pageNum == totalPage%>">
-							<a>다음</a>
+							<a>&gt;</a>
 						</c:if>
 						<c:if test="<%=pageNum != totalPage%>">
 							<a
-								href="/mes/io?page=<%=pageNum+1%>&size=${map.size}<%=filterParams%>">다음</a>
+								href="/mes/io?page=<%=pageNum+1%>&size=${map.size}<%=filterParams%>">&gt;</a>
 						</c:if>
 					</div>
 
